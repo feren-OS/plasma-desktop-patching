@@ -192,6 +192,15 @@ SimpleKCM {
                     changePassword.openAndClear()
                 }
             }
+            
+            QQC2.Button {
+                enabled: fingerprintModel.deviceFound
+                text: i18n("Fingerprint")
+                onClicked: {
+                    fingerprintDialog.account = user;
+                    fingerprintDialog.openAndClear();
+                }
+            }
 
             Item {
                 Layout.preferredHeight: deleteUser.height
@@ -474,6 +483,6 @@ SimpleKCM {
     }
 
     ChangePassword { id: changePassword; account: user }
-
     ChangeWalletPassword { id: changeWalletPassword }
+    FingerprintDialog { id: fingerprintDialog; account: user }
 }
