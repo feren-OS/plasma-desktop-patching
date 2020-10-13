@@ -32,6 +32,7 @@ Kirigami.OverlaySheet {
     
     property var account
     property var fingerprintModel: kcm.fingerprintModel
+    property string currentFinger
     
     enum DialogState {
         FingerprintList,
@@ -87,7 +88,10 @@ Kirigami.OverlaySheet {
             text: i18n("Continue")
             visible: fingerprintModel.dialogState === FingerprintDialog.DialogState.PickFinger
             icon.name: "dialog-ok"
-            onClicked: fingerprintModel.startEnrolling(pickFingerBox.currentValue);
+            onClicked: {
+                fingerprintRoot.currentFinger = pickFingerBox.currentText
+                fingerprintModel.startEnrolling(pickFingerBox.currentValue);
+            }
         }
         
         // Enrolling State
@@ -131,7 +135,7 @@ Kirigami.OverlaySheet {
             }
             
             QQC2.Label {
-                text: i18n("Please repeatedly " + fingerprintModel.scanType + " your " + pickFingerBox.currentText.toLowerCase() + " on the fingerprint sensor.")
+                text: i18n("Please repeatedly " + fingerprintModel.scanType + " your " + fingerprintRoot.currentFinger.toLowerCase() + " on the fingerprint sensor.")
                 Layout.alignment: Qt.AlignHCenter
                 wrapMode: Text.Wrap
                 horizontalAlignment: Text.AlignHCenter
@@ -187,6 +191,7 @@ Kirigami.OverlaySheet {
                 textRole: "friendlyName"
                 valueRole: "internalName"
                 Layout.alignment: Qt.AlignHCenter
+                onActivated: fingerprintRoot.currentFinger = currentText
             }
         }
         
@@ -230,6 +235,16 @@ Kirigami.OverlaySheet {
                             text: finger.friendlyName
                         }
                     }
+                    actions: [
+                        Kirigami.Action {
+                            iconName: "edit-entry"
+                            onTriggered: {
+                                fingerprintRoot.currentFinger = finger.friendlyName;
+                                fingerprintModel.startEnrolling(finger.internalName);
+                            }
+                            tooltip: i18n("Re-enroll finger")
+                        }
+                    ]
                 }
                 
                 Kirigami.PlaceholderMessage {
