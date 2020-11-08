@@ -195,7 +195,7 @@ SimpleKCM {
             
             QQC2.Button {
                 flat: false
-                enabled: kcm.fingerprintModel.deviceFound
+                visible: kcm.fingerprintModel.deviceFound
                 text: i18n("Fingerprint")
                 icon.name: "fingerprint-gui"
                 onClicked: {
@@ -484,6 +484,7 @@ SimpleKCM {
         }
     }
     
+    ChangePassword { id: changePassword; account: user }
     ChangeWalletPassword { id: changeWalletPassword }
     FingerprintDialog { id: fingerprintDialog; account: user }
 }
