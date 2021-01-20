@@ -157,23 +157,8 @@ void KCMKeyboardWidget::uiChanged()
 	if( uiUpdating )
 		return;
 
-	keyboardConfig->showIndicator = uiWidget->showIndicatorChk->isChecked();
-	keyboardConfig->showSingle = uiWidget->showSingleChk->isChecked();
-
 	keyboardConfig->configureLayouts = uiWidget->layoutsGroupBox->isChecked();
 	keyboardConfig->keyboardModel = uiWidget->keyboardModelComboBox->itemData(uiWidget->keyboardModelComboBox->currentIndex()).toString();
-
-	if( uiWidget->showFlagRadioBtn->isChecked() ) {
-		keyboardConfig->indicatorType =  KeyboardConfig::SHOW_FLAG;
-	}
-	else
-	if( uiWidget->showLabelRadioBtn->isChecked() ) {
-		keyboardConfig->indicatorType =  KeyboardConfig::SHOW_LABEL;
-	}
-	else {
-//	if( uiWidget->showFlagRadioBtn->isChecked() ) {
-		keyboardConfig->indicatorType =  KeyboardConfig::SHOW_LABEL_ON_FLAG;
-	}
 
 	keyboardConfig->resetOldXkbOptions = uiWidget->configureKeyboardOptionsChk->isChecked();
 
@@ -351,13 +336,6 @@ void KCMKeyboardWidget::initializeLayoutsUI()
 
 	//	connect(uiWidget->configureLayoutsChk, SIGNAL(toggled(bool)), uiWidget->layoutsGroupBox, SLOT(setEnabled(bool)));
 	connect(uiWidget->layoutsGroupBox, &QGroupBox::toggled, this, &KCMKeyboardWidget::configureLayoutsChanged);
-
-	connect(uiWidget->showIndicatorChk, &QAbstractButton::clicked, this, &KCMKeyboardWidget::uiChanged);
-	connect(uiWidget->showIndicatorChk, &QAbstractButton::toggled, uiWidget->showSingleChk, &QWidget::setEnabled);
-	connect(uiWidget->showFlagRadioBtn, &QAbstractButton::clicked, this, &KCMKeyboardWidget::uiChanged);
-	connect(uiWidget->showLabelRadioBtn, &QAbstractButton::clicked, this, &KCMKeyboardWidget::uiChanged);
-	connect(uiWidget->showLabelOnFlagRadioBtn, &QAbstractButton::clicked, this, &KCMKeyboardWidget::uiChanged);
-	connect(uiWidget->showSingleChk, &QAbstractButton::toggled, this, &KCMKeyboardWidget::uiChanged);
 
 	connect(uiWidget->layoutLoopingCheckBox, &QAbstractButton::clicked, this, &KCMKeyboardWidget::uiChanged);
 	connect(uiWidget->layoutLoopCountSpinBox, SIGNAL(valueChanged(int)), this, SLOT(uiChanged()));
@@ -649,11 +627,6 @@ void KCMKeyboardWidget::updateXkbOptionsUI()
 
 void KCMKeyboardWidget::updateLayoutsUI() {
 	uiWidget->layoutsGroupBox->setChecked(keyboardConfig->configureLayouts);
-	uiWidget->showIndicatorChk->setChecked(keyboardConfig->showIndicator);
-	uiWidget->showSingleChk->setChecked(keyboardConfig->showSingle);
-	uiWidget->showFlagRadioBtn->setChecked(keyboardConfig->indicatorType == KeyboardConfig::SHOW_FLAG);
-	uiWidget->showLabelRadioBtn->setChecked(keyboardConfig->indicatorType == KeyboardConfig::SHOW_LABEL);
-	uiWidget->showLabelOnFlagRadioBtn->setChecked(keyboardConfig->indicatorType == KeyboardConfig::SHOW_LABEL_ON_FLAG);
 
 	bool loopingOn = keyboardConfig->configureLayouts && keyboardConfig->layoutLoopCount
 			!= KeyboardConfig::NO_LOOPING;

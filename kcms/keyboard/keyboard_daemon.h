@@ -41,7 +41,6 @@ class Q_DECL_EXPORT KeyboardDaemon : public KDEDModule
 	KeyboardConfig keyboardConfig;
     KeyboardLayoutActionCollection *actionCollection;
     XInputEventNotifier* xEventNotifier;
-    LayoutTrayIcon* layoutTrayIcon;
     LayoutMemory layoutMemory;
     LayoutUnit currentLayout;
     const Rules* rules;
@@ -57,7 +56,6 @@ private Q_SLOTS:
     void configureMouse();
     void layoutChangedSlot();
     void layoutMapChanged();
-	bool setLayout(QAction* action);
 
 public Q_SLOTS:
 	Q_SCRIPTABLE void switchToNextLayout();

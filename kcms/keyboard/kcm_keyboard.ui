@@ -81,7 +81,16 @@
        </size>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
-       <property name="margin">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
         <number>0</number>
        </property>
       </layout>
@@ -96,50 +105,6 @@
    <layout class="QGridLayout" name="gridLayout_2">
     <item row="0" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_3">
-      <item>
-       <widget class="QGroupBox" name="kbuttongroup">
-        <property name="title">
-         <string>Layout Indicator</string>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_3">
-         <item row="0" column="0">
-          <widget class="QCheckBox" name="showIndicatorChk">
-           <property name="text">
-            <string>Show layout indicator</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QCheckBox" name="showSingleChk">
-           <property name="text">
-            <string>Show for single layout</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QRadioButton" name="showFlagRadioBtn">
-           <property name="text">
-            <string>Show flag</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QRadioButton" name="showLabelRadioBtn">
-           <property name="text">
-            <string>Show label</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0">
-          <widget class="QRadioButton" name="showLabelOnFlagRadioBtn">
-           <property name="text">
-            <string>Show label on flag</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
       <item>
        <widget class="QGroupBox" name="switchingPolicyGroupBox">
         <property name="whatsThis">
@@ -275,11 +240,11 @@
           </widget>
          </item>
          <item row="2" column="1" colspan="2">
-          <widget class="KKeySequenceWidget" name="kdeKeySequence">
+          <widget class="KKeySequenceWidget" name="kdeKeySequence" native="true">
            <property name="whatsThis">
             <string>This is a shortcut for switching layouts. It does not support modifier-only shortcuts and also may not work in some situations (e.g. if popup is active or from screensaver).</string>
            </property>
-           <property name="multiKeyShortcutsAllowed">
+           <property name="multiKeyShortcutsAllowed" stdset="0">
             <bool>false</bool>
            </property>
           </widget>

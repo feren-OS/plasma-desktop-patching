@@ -28,14 +28,13 @@
 
 #include <KPluginFactory>
 
+#include "flags.h"
 #include "x11_helper.h"
 #include "xinput_helper.h"
 #include "xkb_helper.h"
 #include "xkb_rules.h"
 #include "keyboard_hardware.h"
-#include "layout_tray_icon.h"
 #include "layout_memory_persister.h"
-#include "layouts_menu.h"
 
 K_PLUGIN_FACTORY_WITH_JSON(KeyboardFactory,
                            "keyboard.json",
@@ -45,7 +44,6 @@ KeyboardDaemon::KeyboardDaemon(QObject *parent, const QList<QVariant>&)
 	: KDEDModule(parent),
 	  actionCollection(nullptr),
 	  xEventNotifier(nullptr),
-	  layoutTrayIcon(nullptr),
 	  layoutMemory(keyboardConfig),
 	  currentLayout(X11Helper::getCurrentLayout()),
 	  rules(Rules::readRules(Rules::READ_EXTRAS))
@@ -86,7 +84,6 @@ KeyboardDaemon::~KeyboardDaemon()
 	unregisterShortcut();
 
 	delete xEventNotifier;
-	delete layoutTrayIcon;
 	delete rules;
 }
 
@@ -100,8 +97,6 @@ void KeyboardDaemon::configureKeyboard()
 	layoutMemory.configChanged();
 	keyboardConfig.save();
 
-	setupTrayIcon();
-
 	unregisterShortcut();
 	registerShortcut();
 }
@@ -111,20 +106,6 @@ void KeyboardDaemon::configureMouse()
     QStringList modules;
     modules << QStringLiteral("mouse");
     QProcess::startDetached(QStringLiteral("kcminit"), modules);
-}
-
-void KeyboardDaemon::setupTrayIcon()
-{
-	bool show = keyboardConfig.showIndicator
-			&& ( keyboardConfig.showSingle || X11Helper::getLayoutsList().size() > 1 );
-
-	if( show && ! layoutTrayIcon ) {
-		layoutTrayIcon = new LayoutTrayIcon(rules, keyboardConfig);
-	}
-	else if( ! show && layoutTrayIcon ) {
-		delete layoutTrayIcon;
-		layoutTrayIcon = nullptr;
-	}
 }
 
 void KeyboardDaemon::registerShortcut()
@@ -180,9 +161,6 @@ void KeyboardDaemon::layoutChangedSlot()
     LayoutUnit newLayout = X11Helper::getCurrentLayout();
 
 	layoutMemory.layoutChanged();
-	if( layoutTrayIcon != nullptr ) {
-		layoutTrayIcon->layoutChanged();
-	}
 
 	if( newLayout != currentLayout ) {
 		currentLayout = newLayout;
@@ -195,9 +173,6 @@ void KeyboardDaemon::layoutMapChanged()
 	keyboardConfig.load();
 	layoutMemory.layoutMapChanged();
 	emit layoutListChanged();
-	if( layoutTrayIcon != nullptr ) {
-		layoutTrayIcon->layoutMapChanged();
-	}
 }
 
 void KeyboardDaemon::switchToNextLayout()
@@ -208,16 +183,6 @@ void KeyboardDaemon::switchToNextLayout()
 void KeyboardDaemon::switchToPreviousLayout()
 {
 	X11Helper::scrollLayouts(-1);
-}
-
-bool KeyboardDaemon::setLayout(QAction* action)
-{
-	if( action == actionCollection->getToggleAction() )
-		return false;
-
-	LayoutUnit layoutUnit(action->data().toString());
-	return LayoutsMenu::switchToLayout(layoutUnit, keyboardConfig);	// need this to be able to switch to spare layouts
-//	return X11Helper::setLayout(LayoutUnit(action->data().toString()));
 }
 
 bool KeyboardDaemon::setLayout(uint index)
