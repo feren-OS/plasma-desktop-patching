@@ -66,12 +66,12 @@ MouseArea {
         return Qt.rgba(color.r, color.g, color.b, alpha)
     }
 
-    readonly property color windowActiveOnActiveDesktopColor: colorWithAlpha(theme.textColor, 0.6)
-    readonly property color windowInactiveOnActiveDesktopColor: colorWithAlpha(theme.textColor, 0.35)
+    readonly property color windowActiveOnActiveDesktopColor: colorWithAlpha(PlasmaCore.Theme.textColor, 0.6)
+    readonly property color windowInactiveOnActiveDesktopColor: colorWithAlpha(PlasmaCore.Theme.textColor, 0.35)
     readonly property color windowActiveColor: colorWithAlpha(theme.textColor, 0.5)
-    readonly property color windowActiveBorderColor: theme.textColor
-    readonly property color windowInactiveColor: colorWithAlpha(theme.textColor, 0.17)
-    readonly property color windowInactiveBorderColor: colorWithAlpha(theme.textColor, 0.5)
+    readonly property color windowActiveBorderColor: PlasmaCore.Theme.textColor
+    readonly property color windowInactiveColor: colorWithAlpha(PlasmaCore.Theme.textColor, 0.17)
+    readonly property color windowInactiveBorderColor: colorWithAlpha(PlasmaCore.Theme.textColor, 0.5)
 
     function action_addDesktop() {
         pagerModel.addDesktop();
@@ -187,7 +187,7 @@ MouseArea {
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
 
-            font.pixelSize: Math.min(height, theme.defaultFont.pixelSize)
+            font.pixelSize: Math.min(height, PlasmaCore.Theme.defaultFont.pixelSize)
             // unset pointSize set by PlasmaComponents.Label to avoid "Both point size and pixel size set." warning
             font.pointSize: -1
 
@@ -425,7 +425,7 @@ MouseArea {
                             z: 1 + model.StackingOrder
 
                             property rect geometry: model.Geometry
-                            property int windowId: model.WinIdList[0]
+                            property var windowId: model.WinIdList[0]
                             property string visibleName: model.display
                             property bool minimized: (model.IsMinimized === true)
                             onMinimizedChanged: desktop.updateSubText()

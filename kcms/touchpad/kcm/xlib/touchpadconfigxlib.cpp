@@ -39,7 +39,7 @@
 #include "touchpadbackend.h"
 #include "touchpadinterface.h"
 
-#include "version.h"
+#include "plasma_version.h"
 
 void touchpadApplySavedConfig()
 {
@@ -78,7 +78,8 @@ static void copyHelpFromBuddy(QObject *root)
     }
 }
 
-template<typename T> QWidget *addTab(QTabWidget *tabs, T &form)
+template<typename T>
+QWidget *addTab(QTabWidget *tabs, T &form)
 {
     QScrollArea *container = new QScrollArea(tabs);
     container->setWidgetResizable(true);
@@ -103,7 +104,7 @@ TouchpadConfigXlib::TouchpadConfigXlib(TouchpadConfigContainer *parent, Touchpad
 {
     KAboutData *data = new KAboutData(QStringLiteral("kcm_touchpad"),
                                       i18n("Touchpad KCM"),
-                                      TOUCHPAD_KCM_VERSION,
+                                      PLASMA_VERSION_STRING,
                                       i18n("System Settings module, daemon and Plasma applet for managing your touchpad"),
                                       KAboutLicense::GPL_V2,
                                       i18n("Copyright © 2013 Alexander Mezin"),

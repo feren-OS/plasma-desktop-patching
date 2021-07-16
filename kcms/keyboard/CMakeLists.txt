@@ -16,6 +16,7 @@ endif()
 ### kded daemon ###
 
 set( kded_keyboard_SRCS
+    ${CMAKE_CURRENT_BINARY_DIR}/debug.cpp
     keyboard_daemon.cpp
     layout_memory.cpp
     layout_memory_persister.cpp
@@ -26,20 +27,10 @@ set( kded_keyboard_SRCS
     keyboard_config.cpp
     keyboard_hardware.cpp
     bindings.cpp
-# next are temporary for sys tray UI
-    layout_tray_icon.cpp
-    layouts_menu.cpp
     flags.cpp
     xkb_rules.cpp
     layoutnames.cpp
 )
-
-ecm_qt_declare_logging_category(kded_keyboard_SRCS
-    HEADER debug.h
-    IDENTIFIER KCM_KEYBOARD
-    CATEGORY_NAME org.kde.kcm_keyboard
-    DEFAULT_SEVERITY Warning)
-
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(kded_keyboard MODULE ${kded_keyboard_SRCS})
@@ -47,10 +38,10 @@ set_target_properties(kded_keyboard PROPERTIES OUTPUT_NAME keyboard)
 kcoreaddons_desktop_to_json(kded_keyboard keyboard.desktop SERVICE_TYPES kdedmodule.desktop)
 
 target_link_libraries(kded_keyboard
-    Qt5::Concurrent
-    Qt5::Widgets
-    Qt5::X11Extras
-    Qt5::Xml
+    Qt::Concurrent
+    Qt::Widgets
+    Qt::X11Extras
+    Qt::Xml
     KF5::ConfigCore
     KF5::CoreAddons
     KF5::DBusAddons
@@ -68,7 +59,7 @@ target_link_libraries(kded_keyboard
  )
 
 if (HAVE_XINPUT)
-    target_link_libraries(kded_keyboard ${X11_Xinput_LIB})
+    target_link_libraries(kded_keyboard X11::Xi)
 endif()
 
 if (HAVE_UDEV)
@@ -107,17 +98,25 @@ ecm_qt_declare_logging_category(kcm_keyboard_PART_SRCS
     HEADER debug.h
     IDENTIFIER KCM_KEYBOARD
     CATEGORY_NAME org.kde.kcm_keyboard
-    DEFAULT_SEVERITY Warning)
+    DEFAULT_SEVERITY Warning
+    DESCRIPTION "KCM and KDED for keyboard layouts"
+    EXPORT kcm_keyboard)
+ecm_qt_install_logging_categories(
+    EXPORT kcm_keyboard
+    DESTINATION "${KDE_INSTALL_LOGGINGCATEGORIESDIR}"
+)
+
+kconfig_add_kcfg_files(kcm_keyboard_PART_SRCS workspace_options.kcfgc)
 
 ki18n_wrap_ui(kcm_keyboard_PART_SRCS kcm_keyboard.ui kcm_add_layout_dialog.ui kcmmiscwidget.ui)
 
 add_library(kcm_keyboard MODULE ${kcm_keyboard_PART_SRCS})
 
 target_link_libraries(kcm_keyboard
-    Qt5::Concurrent
-    Qt5::Widgets
-    Qt5::X11Extras
-    Qt5::Xml
+    Qt::Concurrent
+    Qt::Widgets
+    Qt::X11Extras
+    Qt::Xml
     KF5::KCMUtils
     KF5::GlobalAccel
     KF5::I18n
@@ -127,9 +126,8 @@ target_link_libraries(kcm_keyboard
     KF5::GuiAddons
     XCB::XCB
     XCB::XKB
-    ${X11_Xkbfile_LIB}
-    ${X11_LIBRARIES}
-    ${text_paint_LIB}
+    X11::X11
+    X11::xkbfile
 )
 
 install(TARGETS kcm_keyboard DESTINATION ${KDE_INSTALL_PLUGINDIR} )

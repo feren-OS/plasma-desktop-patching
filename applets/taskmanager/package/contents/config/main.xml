@@ -22,6 +22,10 @@
       <label>Whether to show only window tasks that are minmized.</label>
       <default>false</default>
     </entry>
+    <entry name="unhideOnAttention" type="Bool">
+      <label>Whether to unhide if a window wants attention.</label>
+      <default>true</default>
+    </entry>
     <entry name="groupingStrategy" type="Enum">
       <label>How tasks are grouped: 0 = Do Not Group, 1 = By Program Name</label>
       <default>1</default>
@@ -72,8 +76,8 @@
       <default>true</default>
     </entry>
     <entry name="highlightWindows" type="Bool">
-      <label>Whether to request the window manager highlight windows when hovering corresponding task buttons.</label>
-      <default>false</default>
+      <label>Whether to request the window manager highlight windows when hovering corresponding task tooltips.</label>
+      <default>true</default>
     </entry>
     <entry name="launchers" type="StringList">
       <label>The list of launcher tasks on the widget. Usually .desktop file or executable URLs. Special URLs such as preferred://browser that expand to default applications are supported.</label>

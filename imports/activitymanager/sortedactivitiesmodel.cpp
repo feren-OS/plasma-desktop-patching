@@ -39,7 +39,7 @@
 #include <KWindowSystem>
 #include <QX11Info>
 
-#define PLASMACONFIG "plasma-org.kde.plasma.desktop-appletsrc"
+static const char *s_plasma_config = "plasma-org.kde.plasma.desktop-appletsrc";
 
 namespace
 {
@@ -48,11 +48,11 @@ class BackgroundCache : public QObject
 public:
     BackgroundCache()
         : initialized(false)
-        , plasmaConfig(KSharedConfig::openConfig(PLASMACONFIG))
+        , plasmaConfig(KSharedConfig::openConfig(QString::fromLatin1(s_plasma_config)))
     {
         using namespace std::placeholders;
 
-        const QString configFile = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + QLatin1Char('/') + PLASMACONFIG;
+        const QString configFile = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + QLatin1Char{'/'} + QLatin1String{s_plasma_config};
 
         KDirWatch::self()->addFile(configFile);
 
@@ -62,7 +62,7 @@ public:
 
     void settingsFileChanged(const QString &file)
     {
-        if (!file.endsWith(PLASMACONFIG)) {
+        if (!file.endsWith(QLatin1String{s_plasma_config})) {
             return;
         }
 
@@ -146,7 +146,7 @@ public:
             //          << "last screen is" << lastScreen
             //          ;
 
-            if (processed && newForActivity[activity][0] != '#')
+            if (processed && newForActivity[activity][0] != QLatin1Char{'#'})
                 continue;
 
             // Marking the current activity as processed
@@ -233,7 +233,7 @@ SortedActivitiesModel::SortedActivitiesModel(const QVector<KActivities::Info::St
         KWindowInfo info(window, NET::WMVisibleName, NET::WM2Activities);
         const QStringList activities = info.activities();
 
-        if (activities.isEmpty() || activities.contains("00000000-0000-0000-0000-000000000000"))
+        if (activities.isEmpty() || activities.contains(QLatin1String{"00000000-0000-0000-0000-000000000000"}))
             continue;
 
         for (const auto &activity : activities) {
@@ -263,7 +263,7 @@ void SortedActivitiesModel::setInhibitUpdates(bool inhibitUpdates)
 {
     if (m_inhibitUpdates != inhibitUpdates) {
         m_inhibitUpdates = inhibitUpdates;
-        emit inhibitUpdatesChanged(m_inhibitUpdates);
+        Q_EMIT inhibitUpdatesChanged(m_inhibitUpdates);
 
         setDynamicSortFilter(!inhibitUpdates);
     }
@@ -275,7 +275,7 @@ uint SortedActivitiesModel::lastUsedTime(const QString &activity) const
         return ~(uint)0;
 
     } else {
-        KConfig config("kactivitymanagerd-switcher", KConfig::SimpleConfig);
+        KConfig config(QStringLiteral("kactivitymanagerd-switcher"), KConfig::SimpleConfig);
         KConfigGroup times(&config, "LastUsed");
 
         return times.readEntry(activity, (uint)0);
@@ -343,12 +343,12 @@ QVariant SortedActivitiesModel::data(const QModelIndex &index, int role) const
             diff /= 12;
             const auto years = diff;
 
-            return (years > 0) ? i18n("Used more than a year ago")
-                               : (months > 0) ? i18ncp("amount in months", "Used a month ago", "Used %1 months ago", months)
-                                              : (days > 0) ? i18ncp("amount in days", "Used a day ago", "Used %1 days ago", days)
-                                                           : (hours > 0)
-                            ? i18ncp("amount in hours", "Used an hour ago", "Used %1 hours ago", hours)
-                            : (minutes > 0) ? i18ncp("amount in minutes", "Used a minute ago", "Used %1 minutes ago", minutes) : i18n("Used a moment ago");
+            return (years > 0)  ? i18n("Used more than a year ago")
+                : (months > 0)  ? i18ncp("amount in months", "Used a month ago", "Used %1 months ago", months)
+                : (days > 0)    ? i18ncp("amount in days", "Used a day ago", "Used %1 days ago", days)
+                : (hours > 0)   ? i18ncp("amount in hours", "Used an hour ago", "Used %1 hours ago", hours)
+                : (minutes > 0) ? i18ncp("amount in minutes", "Used a minute ago", "Used %1 minutes ago", minutes)
+                                : i18n("Used a moment ago");
         }
 
     } else if (role == HasWindows || role == WindowCount) {
@@ -423,19 +423,19 @@ void SortedActivitiesModel::onCurrentActivityChanged(const QString &currentActiv
         return;
 
     const int previousActivityRow = rowForActivityId(m_previousActivity);
-    emit rowChanged(previousActivityRow, {LastTimeUsed, LastTimeUsedString});
+    rowChanged(previousActivityRow, {LastTimeUsed, LastTimeUsedString});
 
     m_previousActivity = currentActivity;
 
     const int currentActivityRow = rowForActivityId(m_previousActivity);
-    emit rowChanged(currentActivityRow, {LastTimeUsed, LastTimeUsedString});
+    rowChanged(currentActivityRow, {LastTimeUsed, LastTimeUsedString});
 }
 
 void SortedActivitiesModel::onBackgroundsUpdated(const QStringList &activities)
 {
     for (const auto &activity : activities) {
         const int row = rowForActivityId(activity);
-        emit rowChanged(row, {KActivities::ActivitiesModel::ActivityBackground});
+        rowChanged(row, {KActivities::ActivitiesModel::ActivityBackground});
     }
 }
 
@@ -444,7 +444,7 @@ void SortedActivitiesModel::onWindowAdded(WId window)
     KWindowInfo info(window, NET::Properties(), NET::WM2Activities);
     const QStringList activities = info.activities();
 
-    if (activities.isEmpty() || activities.contains("00000000-0000-0000-0000-000000000000"))
+    if (activities.isEmpty() || activities.contains(QLatin1String{"00000000-0000-0000-0000-000000000000"}))
         return;
 
     for (const auto &activity : activities) {
@@ -487,5 +487,5 @@ void SortedActivitiesModel::rowChanged(int row, const QVector<int> &roles)
 {
     if (row == -1)
         return;
-    emit dataChanged(index(row, 0), index(row, 0), roles);
+    Q_EMIT dataChanged(index(row, 0), index(row, 0), roles);
 }

@@ -21,12 +21,12 @@
 #include <QDBusPendingCallWatcher>
 #include <QIcon>
 
+#include <KApplicationTrader>
 #include <KConfigGroup>
 #include <KGlobalAccel>
 #include <KGlobalShortcutInfo>
 #include <KLocalizedString>
 #include <KService>
-#include <KServiceTypeTrader>
 #include <kglobalaccel_component_interface.h>
 #include <kglobalaccel_interface.h>
 
@@ -106,22 +106,31 @@ Component GlobalAccelModel::loadComponent(const QList<KGlobalShortcutInfo> &info
 {
     const QString &componentUnique = info[0].componentUniqueName();
     const QString &componentFriendly = info[0].componentFriendlyName();
-    KService::Ptr service = KService::serviceByStorageId(componentUnique);
+    KService::Ptr service;
+    // The shortcuts were imported by desktop file
+    if (componentUnique.endsWith(QLatin1String(".desktop"))) {
+        service = new KService(QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("kglobalaccel/") + componentUnique));
+    } else {
+        service = KService::serviceByStorageId(componentUnique);
+    }
+
     if (!service) {
-        // Do we have an application with that name?
-        const KService::List apps = KServiceTypeTrader::self()->query(QStringLiteral("Application"),
-                                                                      QStringLiteral("Name == '%1' or Name == '%2'").arg(componentUnique, componentFriendly));
-        if (!apps.isEmpty()) {
-            service = apps[0];
-        }
+        // Do we have a service with that name?
+        auto filter = [componentUnique, componentFriendly](const KService::Ptr service) {
+            return service->name() == componentUnique || service->name() == componentFriendly;
+        };
+
+        const KService::List services = KApplicationTrader::query(filter);
+        service = services.value(0, KService::Ptr());
     }
     const QString type = service && service->isApplication() ? i18n("Applications") : i18n("System Services");
     QString icon;
 
-    static const QHash<QString, QString> hardCodedIcons = {{"ActivityManager", "preferences-desktop-activities"},
-                                                           {"KDE Keyboard Layout Switcher", "input-keyboard"},
-                                                           {"krunner.desktop", "krunner"},
-                                                           {"org_kde_powerdevil", "preferences-system-power-management"}};
+    static const QHash<QString, QString> hardCodedIcons = {
+        {"ActivityManager", "preferences-desktop-activities"},
+        {"KDE Keyboard Layout Switcher", "input-keyboard"},
+        {"org_kde_powerdevil", "preferences-system-power-management"},
+    };
 
     if (service && !service->icon().isEmpty()) {
         icon = service->icon();
@@ -172,8 +181,13 @@ void GlobalAccelModel::save()
         for (auto &action : it->actions) {
             if (action.initialShortcuts != action.activeShortcuts) {
                 const QStringList actionId = buildActionId(it->id, it->displayName, action.id, action.displayName);
-                // operator int of QKeySequence
-                QList<int> keys(action.activeShortcuts.cbegin(), action.activeShortcuts.cend());
+                // TODO: pass action.activeShortcuts to m_globalAccelInterface->setForeignShortcut() as a QSet<QKeySequence>
+                // or QList<QKeySequence>?
+                QList<int> keys;
+                keys.reserve(action.activeShortcuts.size());
+                for (const QKeySequence &key : qAsConst(action.activeShortcuts)) {
+                    keys.append(key[0]);
+                }
                 qCDebug(KCMKEYS) << "Saving" << actionId << action.activeShortcuts << keys;
                 auto reply = m_globalAccelInterface->setForeignShortcut(actionId, keys);
                 reply.waitForFinished();
@@ -182,10 +196,10 @@ void GlobalAccelModel::save()
                     if (reply.error().isValid()) {
                         qCCritical(KCMKEYS) << reply.error().name() << reply.error().message();
                     }
-                    emit errorOccured(i18nc("%1 is the name of the component, %2 is the action for which saving failed",
-                                            "Error while saving shortcut %1: %2",
-                                            it->displayName,
-                                            it->displayName));
+                    Q_EMIT errorOccured(i18nc("%1 is the name of the component, %2 is the action for which saving failed",
+                                              "Error while saving shortcut %1: %2",
+                                              it->displayName,
+                                              it->displayName));
                 } else {
                     action.initialShortcuts = action.activeShortcuts;
                 }
@@ -319,5 +333,5 @@ void GlobalAccelModel::genericErrorOccured(const QString &description, const QDB
     if (error.isValid()) {
         qCCritical(KCMKEYS) << error.name() << error.message();
     }
-    emit this->errorOccured(i18n("Error while communicating with the global shortcuts service"));
+    Q_EMIT this->errorOccured(i18n("Error while communicating with the global shortcuts service"));
 }

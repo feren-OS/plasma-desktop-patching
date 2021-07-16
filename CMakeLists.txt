@@ -1,12 +1,12 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.16)
 
 project(plasma-desktop)
 
-set(PROJECT_VERSION "5.21.5")
+set(PROJECT_VERSION "5.22.3")
 set(PROJECT_VERSION_MAJOR 5)
 
 set(QT_MIN_VERSION "5.15.0")
-set(KF5_MIN_VERSION "5.78")
+set(KF5_MIN_VERSION "5.82")
 set(ACCOUNTSQT_DEP_VERSION "1.13")
 
 set(CMAKE_CXX_STANDARD 17)
@@ -17,15 +17,18 @@ set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modul
 
 include(KDEInstallDirs)
 include(KDECMakeSettings)
-include(KDEFrameworkCompilerSettings NO_POLICY_SCOPE)
+include(KDECompilerSettings NO_POLICY_SCOPE)
 include(ECMInstallIcons)
 include(ECMMarkAsTest)
 include(ECMMarkNonGuiExecutable)
 include(ECMOptionalAddSubdirectory)
 include(ECMQtDeclareLoggingCategory)
+include(ECMSetupVersion)
+include(ECMQtDeclareLoggingCategory)
 include(FeatureSummary)
 include(CheckIncludeFiles)
 include(KDEClangFormat)
+include(KDEGitCommitHooks)
 
 find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
     Quick
@@ -39,6 +42,7 @@ find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
 
 find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
     Auth
+    Crash
     Plasma
     PlasmaQuick
     DocTools
@@ -46,12 +50,14 @@ find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
     KCMUtils
     NewStuff
     NewStuffQuick
-    KDELibs4Support
+    KIO
     Notifications
     NotifyConfig
     Attica
     Runner
     GlobalAccel
+    CoreAddons # KSharedDataCache required by KImageCache
+    GuiAddons # KImageCache
     Declarative
     DBusAddons
     Activities
@@ -60,9 +66,14 @@ find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
     Wallet
     WidgetsAddons
     Codecs
+    Sonnet
+    KDELibs4Support # kcms/dateandtime
 )
 
 find_package(AccountsQt5 ${ACCOUNTSQT_DEP_VERSION} CONFIG)
+
+find_package(KUserFeedback)
+
 set_package_properties(AccountsQt5 PROPERTIES DESCRIPTION "Accounts management library for Qt applications"
    URL "https://gitlab.com/accounts-sso/libaccounts-qt"
    TYPE OPTIONAL
@@ -133,28 +144,29 @@ find_package(XCB
     REQUIRED COMPONENTS
         XCB SHM IMAGE
     OPTIONAL_COMPONENTS
-        XKB XINPUT
+        XKB XINPUT ATOM RECORD
 )
+
+find_package(X11_XCB)
+set_package_properties(X11_XCB PROPERTIES TYPE OPTIONAL
+                        PURPOSE "Required for needed for touchpad KCM (X11 backend)"
+                      )
 
 set_package_properties(XCB PROPERTIES TYPE REQUIRED)
 add_feature_info("XCB-XKB" XCB_XKB_FOUND "Required for building kcm/keyboard")
 add_feature_info("libxft" X11_Xft_FOUND "X FreeType interface library required for font installation")
 
-find_package(Evdev)
-set_package_properties(Evdev PROPERTIES TYPE OPTIONAL)
-add_feature_info("Evdev" EVDEV_FOUND "Evdev driver headers needed for mouse KCM")
+pkg_check_modules(XORGLIBINPUT xorg-libinput IMPORTED_TARGET)
+pkg_check_modules(EVDEV xorg-evdev>=2.8.99.1 IMPORTED_TARGET)
+pkg_check_modules(XORGSERVER xorg-server IMPORTED_TARGET)
 
 find_package(Synaptics)
 set_package_properties(Synaptics PROPERTIES TYPE OPTIONAL)
-add_feature_info("Synaptics" SYNAPTICS_FOUND "Synaptics libraries needed for touchpad KCM")
+add_feature_info("Synaptics" SYNAPTICS_FOUND "Synaptics libraries are needed for the synaptics touchpad KCM")
 
-find_package(XorgServer)
-set_package_properties(XorgServer PROPERTIES TYPE OPTIONAL)
-add_feature_info("XorgServer" XORGSERVER_FOUND "XServer header needed for touchpad KCM (X11 backend)")
-
-find_package(XorgLibinput)
-set_package_properties(XorgLibinput PROPERTIES TYPE OPTIONAL)
-add_feature_info("XorgLibinput" XORGLIBINPUT_FOUND "Libinput driver headers needed for mouse and touchpad KCM")
+if(SYNAPTICS_FOUND)
+    set(HAVE_SYNAPTICS 1)
+endif()
 
 if(XORGLIBINPUT_FOUND)
   set(HAVE_XORGLIBINPUT 1)
@@ -171,6 +183,19 @@ set_package_properties(PackageKitQt5
 if(PackageKitQt5_FOUND)
     set(HAVE_PACKAGEKIT TRUE)
 endif()
+
+find_package(GLIB2)
+set_package_properties(GLIB2
+        PROPERTIES TYPE OPTIONAL
+        PURPOSE "Required for building kimpanel"
+        )
+
+# For kimpanel
+pkg_check_modules(IBUS "ibus-1.0>=1.5.0" IMPORTED_TARGET)
+pkg_check_modules(GOBJECT gobject-2.0 IMPORTED_TARGET)
+pkg_check_modules(SCIM scim IMPORTED_TARGET)
+
+ecm_setup_version(${PROJECT_VERSION} VARIABLE_PREFIX PLASMA VERSION_HEADER plasma_version.h)
 
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
@@ -205,5 +230,13 @@ install(FILES org.kde.plasmashell.metainfo.xml DESTINATION ${KDE_INSTALL_METAINF
 # add clang-format target for all our real source files
 file(GLOB_RECURSE ALL_CLANG_FORMAT_SOURCE_FILES *.cpp *.h)
 kde_clang_format(${ALL_CLANG_FORMAT_SOURCE_FILES})
+kde_configure_git_pre_commit_hook(CHECKS CLANG_FORMAT)
 
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES FATAL_ON_MISSING_REQUIRED_PACKAGES)
+
+find_package(XdgUserDir)
+set_package_properties(XdgUserDir PROPERTIES DESCRIPTION "Xdg-user-dir script"
+    TYPE RUNTIME
+    PURPOSE "Used to translate default paths in KCM desktoppath")
+
+

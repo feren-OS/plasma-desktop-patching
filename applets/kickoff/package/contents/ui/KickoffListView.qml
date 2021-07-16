@@ -113,20 +113,6 @@ FocusScope {
         repeat: false
     }
 
-    Timer {
-        id: delayedActivation
-        // interaction time needs to be a constant
-        interval: 250
-        repeat: false
-        property int indexToGoTo: -1
-        onTriggered: {
-            if (indexToGoTo !== -1) {
-                listView.currentIndex = indexToGoTo
-                indexToGoTo = -1
-            }
-        }
-    }
-
     PC3.ScrollView {
         anchors.fill: parent
         PC3.ScrollBar.horizontal.visible: false
@@ -248,13 +234,6 @@ FocusScope {
                 hoverEnabled: true
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
 
-                onExited: {
-                    if (view.isManagerMode || view.isExternalManagerMode) {
-                        delayedActivation.stop();
-                        delayedActivation.indexToGoTo = -1;
-                    }
-                }
-
                 onPressed: {
                     var mapped = listView.mapToItem(listView.contentItem, mouse.x, mouse.y);
                     var item = listView.itemAt(mapped.x, mapped.y);
@@ -287,8 +266,10 @@ FocusScope {
                             if (isManagerMode && view.currentItem && !view.currentItem.modelChildren) {
                                 view.activatedItem = view.currentItem;
                                 view.moveRight();
-                            } else if (!isManagerMode) {
+                            } else if (!isManagerMode && item.modelChildren) {
                                 view.state = "OutgoingLeft";
+                            } else if (!isManagerMode) {
+                                item.activate();
                             }
                         } else {
                             item.activate();
@@ -320,12 +301,7 @@ FocusScope {
                             }
                         }
                         if (kickoff.dragSource == null || kickoff.dragSource == item) {
-                            if ((!view.isManagerMode && !view.isExternalManagerMode) || changedIndexRecently.running || mouse.source == Qt.MouseEventSynthesizedByQt) {
-                                listView.currentIndex = item.itemIndex;
-                            } else {
-                                delayedActivation.indexToGoTo = item.itemIndex;
-                                delayedActivation.start()
-                            }
+                            listView.currentIndex = item.itemIndex;
                         }
                     }
 

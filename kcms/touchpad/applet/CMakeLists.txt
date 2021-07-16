@@ -3,10 +3,6 @@ add_definitions(-DTRANSLATION_DOMAIN="plasma_applet_touchpad")
 
 plasma_install_package(qml touchpad)
 
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dataengine.desktop"
-               "${CMAKE_CURRENT_BINARY_DIR}/plasma-dataengine-touchpad.desktop"
-)
-
 set(Applet_SRCS
     touchpadengine.cpp
     touchpadservice.cpp
@@ -23,15 +19,15 @@ qt5_add_dbus_interfaces(Applet_SRCS
 add_library(plasma_engine_touchpad MODULE ${Applet_SRCS})
 target_link_libraries(plasma_engine_touchpad
                       KF5::Plasma
-		      Qt5::DBus
+		      Qt::DBus
 )
 
-kcoreaddons_desktop_to_json(plasma_engine_touchpad ${CMAKE_CURRENT_BINARY_DIR}/plasma-dataengine-touchpad.desktop SERVICE_TYPES kcmodule.desktop)
+kcoreaddons_desktop_to_json(plasma_engine_touchpad plasma-dataengine-touchpad.desktop SERVICE_TYPES kcmodule.desktop)
 
 install(TARGETS plasma_engine_touchpad
         DESTINATION ${KDE_INSTALL_PLUGINDIR}/plasma/dataengine
 )
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/plasma-dataengine-touchpad.desktop
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/plasma-dataengine-touchpad.desktop
         DESTINATION ${KDE_INSTALL_KSERVICES5DIR}
 )
 install(FILES touchpad.operations

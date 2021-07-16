@@ -22,6 +22,8 @@
 import QtQuick 2.0
 import org.kde.plasma.core 2.0 as PlasmaCore
 import org.kde.plasma.components 3.0 as PlasmaComponents3
+import org.kde.plasma.extras 2.0 as PlasmaExtras
+import org.kde.plasma.private.kicker 0.1 as Kicker
 
 FocusScope {
     id: appViewContainer
@@ -68,37 +70,43 @@ FocusScope {
         }
     }
 
-    KickoffListView {
-        id: applicationsView
-        isManagerMode: true
+    Kicker.TriangleMouseFilter {
         anchors.fill: parent
 
-        property Item activatedItem: null
-        property var newModel: null
+        edge: LayoutMirroring.enabled ? Qt.LeftEdge : Qt.RightEdge
 
-        Behavior on opacity {
-            NumberAnimation {
-                duration: PlasmaCore.Units.longDuration
-                easing.type: Easing.InOutQuad
+        KickoffListView {
+            id: applicationsView
+            isManagerMode: true
+            anchors.fill: parent
+
+            property Item activatedItem: null
+            property var newModel: null
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: PlasmaCore.Units.longDuration
+                    easing.type: Easing.InOutQuad
+                }
             }
-        }
 
-        focus: true
+            focus: true
 
-        appView: true
+            appView: true
 
-        model: rootModel
+            model: rootModel
 
-        function moveRight() {
-            var childModel = activatedItem.activate()
-            if (childModel != null) {
-                appViewContainer.activatedSection = childModel.model
-                appViewContainer.newBreadcrumbName = childModel.name
-                appViewContainer.appModelChange()
+            function moveRight() {
+                var childModel = activatedItem.activate()
+                if (childModel != null) {
+                    appViewContainer.activatedSection = childModel.model
+                    appViewContainer.newBreadcrumbName = childModel.name
+                    appViewContainer.appModelChange()
+                }
             }
-        }
 
-        onReset: appViewContainer.reset()
+            onReset: appViewContainer.reset()
+        }
     }
 
     // Displays text when application list gets updated
@@ -112,7 +120,7 @@ FocusScope {
         onRunningChanged: {
             if (running) {
                 updatedLabel.opacity = 1;
-                applicationsView.listView.opacity = 0.3;
+                applicationsView.listView.opacity = 0;
             }
         }
         onTriggered: {
@@ -122,9 +130,11 @@ FocusScope {
         }
     }
 
-    PlasmaComponents3.Label {
+    PlasmaExtras.PlaceholderMessage {
         id: updatedLabel
-        text: i18n("Applications updated.")
+        width: parent.width - (PlasmaCore.Units.largeSpacing * 4)
+        text: i18n("Updating applications...")
+        iconName: "view-refresh"
         opacity: 0
         visible: opacity != 0
         anchors.centerIn: parent

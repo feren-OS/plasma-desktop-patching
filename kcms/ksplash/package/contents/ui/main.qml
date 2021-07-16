@@ -34,9 +34,9 @@ KCM.GridViewKCM {
         extraEnabledConditions: !kcm.testing
     }
 
-    view.model: kcm.splashModel
+    view.model: kcm.splashSortedModel
     //NOTE: pay attention to never break this binding
-    view.currentIndex: kcm.pluginIndex(kcm.splashScreenSettings.theme)
+    view.currentIndex: kcm.sortModelPluginIndex(kcm.splashScreenSettings.theme)
 
     // putting the InlineMessage as header item causes it to show up initially despite visible false
     header: ColumnLayout {
@@ -45,11 +45,18 @@ KCM.GridViewKCM {
             Layout.fillWidth: true
             showCloseButton: true
             type: Kirigami.MessageType.Error
-            text: i18n("Failed to test the splash screen.")
 
             Connections {
                 target: kcm
-                function onTestingFailed() {
+                function onTestingFailed(processErrorOutput) {
+                    testingFailedLabel.text = i18n("Failed to show the splash screen preview.")
+                    if (processErrorOutput) {
+                        testingFailedLabel.text += "\n" + processErrorOutput
+                    }
+                    testingFailedLabel.visible = true
+                }
+                function onError(text) {
+                    testingFailedLabel.text = text
                     testingFailedLabel.visible = true
                 }
             }
@@ -68,6 +75,7 @@ KCM.GridViewKCM {
             source: model.screenshot || ""
             sourceSize: Qt.size(delegate.GridView.view.cellWidth * Screen.devicePixelRatio,
                                 delegate.GridView.view.cellHeight * Screen.devicePixelRatio)
+            opacity: model.pendingDeletion ? 0.3 : 1
         }
         actions: [
             Kirigami.Action {
@@ -75,11 +83,20 @@ KCM.GridViewKCM {
                 iconName: "media-playback-start"
                 tooltip: i18n("Preview Splash Screen")
                 onTriggered: kcm.test(model.pluginName)
+            },
+            Kirigami.Action {
+                iconName: model.pendingDeletion ? "edit-undo" : "edit-delete"
+                tooltip: i18n("Uninstall")
+                enabled: model.uninstallable
+                onTriggered: model.pendingDeletion = !model.pendingDeletion
             }
         ]
         onClicked: {
             kcm.splashScreenSettings.theme = model.pluginName;
             view.forceActiveFocus();
+        }
+        onDoubleClicked: {
+            kcm.save();
         }
     }
 
@@ -92,7 +109,9 @@ KCM.GridViewKCM {
             text: i18n("&Get New Splash Screens...")
             configFile: "ksplash.knsrc"
             viewMode: NewStuff.Page.ViewMode.Preview
-            onChangedEntriesChanged: kcm.ghnsEntriesChanged(newStuffButton.changedEntries);
+            onEntryEvent: function(entry, event) {
+                kcm.ghnsEntryChanged(entry);
+            }
         }
     }
 }

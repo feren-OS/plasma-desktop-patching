@@ -22,6 +22,7 @@ import QtQuick 2.1
 import QtQuick.Layouts 1.1
 import QtQuick.Controls 2.11 as QQC2
 import QtQuick.Dialogs 1.2 as QtDialogs
+import org.kde.baloo.experimental 0.1 as Baloo
 import org.kde.kirigami 2.4 as Kirigami
 import org.kde.kcm 1.3 as KCM
 
@@ -32,9 +33,50 @@ KCM.SimpleKCM {
     implicitHeight: Kirigami.Units.gridUnit * 25
 
     KCM.ConfigModule.quickHelp: i18n("This module lets you configure the file indexer and search functionality.")
+
+    Baloo.Monitor {
+        id: monitor
+
+        readonly property bool currentlyIndexing: switch(monitor.IndexerState) {
+                                                      case Baloo.FirstRun:
+                                                      case Baloo.NewFiles:
+                                                      case Baloo.ModifiedFiles:
+                                                      case Baloo.XAttrFiles:
+                                                      case Baloo.ContentIndexing:
+                                                      case Baloo.UnindexedFileCheck:
+                                                      case Baloo.StaleIndexEntriesClean:
+                                                          return true;
+                                                          break;
+                                                      default:
+                                                          return false;
+                                                          break;
+        }
+
+        readonly property int completionPercentage: Math.floor(monitor.filesIndexed / monitor.totalFiles * 100)
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Kirigami.Units.largeSpacing
+
+        Kirigami.InlineMessage {
+            id: indexingDisabledWarning
+            Layout.fillWidth: true
+            visible: !kcm.balooSettings.indexingEnabled && !kcm.needsSave && kcm.rawIndexFileSize() > 0
+            type: Kirigami.MessageType.Warning
+            showCloseButton: true
+            text: i18n("Do you want to delete the saved index data? %1 of space will be freed, but if indexing is re-enabled later, the entire index will have to be re-created from scratch. This may take some time, depending on how many files you have.", kcm.prettyIndexFileSize());
+            actions: [
+                Kirigami.Action {
+                    text: i18n("Delete Index Data")
+                    icon.name: "edit-delete"
+                    onTriggered: {
+                        kcm.deleteIndex();
+                        indexingDisabledWarning.visible = false;
+                    }
+                }
+            ]
+        }
 
         QQC2.Label {
             text: i18n("File Search helps you quickly locate all your files based on their content.")
@@ -92,6 +134,38 @@ KCM.SimpleKCM {
         Item {
             Layout.preferredHeight: Kirigami.Units.gridUnit
         }
+
+        // Current status, if indexing
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.bottomMargin: Kirigami.Units.gridUnit
+
+            visible: fileSearchEnabled.checked
+
+            RowLayout {
+                //Layout.alignment: Qt.AlignHCenter
+                QQC2.Label {
+                    text: i18n("Status: %1, %2\% complete", monitor.stateString, monitor.completionPercentage)
+                }
+
+                QQC2.Button {
+                    text: monitor.currentlyIndexing ? i18n("Pause Indexer") : i18n("Resume Indexer")
+                    onClicked: monitor.toggleSuspendState()
+                }
+            }
+
+            QQC2.Label {
+                id: filePath
+
+                Layout.fillWidth: true
+
+                visible: text.length > 0
+
+                elide: Text.ElideMiddle
+                text: monitor.currentlyIndexing && monitor.completionPercentage != 100 ? i18n("Currently indexing: %1", monitor.filePath) : ""
+            }
+        }
+
         QQC2.Label {
             text: i18n("Folder specific configuration:")
         }
@@ -101,6 +175,8 @@ KCM.SimpleKCM {
             Component.onCompleted: bgObject.background.visible = true
             Layout.fillWidth: true
             Layout.fillHeight: true
+
+            enabled: fileSearchEnabled.checked
 
             ListView {
                 id: directoryConfigList
@@ -116,6 +192,8 @@ KCM.SimpleKCM {
             id: menuButton
 
             Layout.alignment: Qt.AlignRight
+
+            enabled: fileSearchEnabled.checked
 
             icon.name: "folder-add"
             text: i18n("Add folder configuration...")

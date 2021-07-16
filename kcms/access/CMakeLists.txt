@@ -3,8 +3,6 @@ add_definitions(-DTRANSLATION_DOMAIN=\"kcmaccess\")
 
 set(kcm_access_PART_SRCS kcmaccess.cpp )
 
-# needed for krdb
-qt5_add_dbus_interface(kcm_access_PART_SRCS ${KINIT_DBUS_INTERFACES_DIR}/kf5_org.kde.KLauncher.xml klauncher_iface)
 kconfig_add_kcfg_files(kcm_access_PART_SRCS
     kcmaccessibilitybell.kcfgc
     kcmaccessibilitykeyboard.kcfgc
@@ -24,7 +22,7 @@ kcmutils_generate_module_data(
 add_library(kcm_access MODULE ${kcm_access_PART_SRCS})
 
 target_link_libraries(kcm_access
-    Qt5::DBus
+    Qt::DBus
     KF5::KCMUtils
     KF5::CoreAddons
     KF5::Declarative
@@ -34,7 +32,7 @@ target_link_libraries(kcm_access
     KF5::QuickAddons
     KF5::WindowSystem
     KF5::NotifyConfig
-    Qt5::X11Extras
+    Qt::X11Extras
     ${X11_LIBRARIES}
 )
 

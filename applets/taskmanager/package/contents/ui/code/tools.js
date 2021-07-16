@@ -59,14 +59,19 @@ function activateNextPrevTask(anchor, next) {
                 }
 
                 for (var j = 0; j < tasksModel.rowCount(modelIndex); ++j) {
-                    taskIndexList.push(tasksModel.makeModelIndex(i, j));
+                    var childModelIndex = tasksModel.makeModelIndex(i, j);
+                    if (!task.m.IsHidden) {
+                        taskIndexList.push(childModelIndex);
+                    }
                 }
 
                 if (task == anchor) { // See above.
                     break;
                 }
             } else {
-                taskIndexList.push(modelIndex);
+                if (!task.m.IsHidden) {
+                    taskIndexList.push(modelIndex);
+                }
             }
         }
     }
@@ -163,7 +168,7 @@ function activateTask(index, model, modifiers, task) {
         // ==================================================
         // Make sure the Present Windows effect is  are actually enabled though;
         // if not, fall through to the next option.
-        else if (backend.canPresentWindows()
+        else if (backend.canPresentWindows
             && (plasmoid.configuration.groupedTaskVisualization === 2
             || plasmoid.configuration.groupedTaskVisualization === 1)
         ) {

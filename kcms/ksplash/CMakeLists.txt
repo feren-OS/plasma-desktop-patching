@@ -26,10 +26,11 @@ target_link_libraries(kcm_splashscreen
   KF5::I18n
   KF5::Plasma
   KF5::PlasmaQuick
+  KF5::NewStuff
 
-  Qt5::DBus
-  Qt5::Widgets
-  Qt5::QuickWidgets
+  Qt::DBus
+  Qt::Widgets
+  Qt::QuickWidgets
 )
 
 kcoreaddons_desktop_to_json(kcm_splashscreen "kcm_splashscreen.desktop" SERVICE_TYPES kcmodule.desktop)

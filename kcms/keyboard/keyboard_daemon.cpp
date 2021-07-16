@@ -30,22 +30,19 @@
 
 #include "keyboard_hardware.h"
 #include "layout_memory_persister.h"
-#include "layout_tray_icon.h"
-#include "layouts_menu.h"
 #include "x11_helper.h"
 #include "xinput_helper.h"
 #include "xkb_helper.h"
 #include "xkb_rules.h"
+#include "flags.h"
 
-K_PLUGIN_FACTORY_WITH_JSON(KeyboardFactory, "keyboard.json", registerPlugin<KeyboardDaemon>();)
+K_PLUGIN_CLASS_WITH_JSON(KeyboardDaemon, "keyboard.json")
 
 KeyboardDaemon::KeyboardDaemon(QObject *parent, const QList<QVariant> &)
     : KDEDModule(parent)
     , actionCollection(nullptr)
     , xEventNotifier(nullptr)
-    , layoutTrayIcon(nullptr)
     , layoutMemory(keyboardConfig)
-    , currentLayout(X11Helper::getCurrentLayout())
     , rules(Rules::readRules(Rules::READ_EXTRAS))
 {
     if (!X11Helper::xkbSupported(nullptr))
@@ -72,7 +69,7 @@ KeyboardDaemon::KeyboardDaemon(QObject *parent, const QList<QVariant> &)
 KeyboardDaemon::~KeyboardDaemon()
 {
     LayoutMemoryPersister layoutMemoryPersister(layoutMemory);
-    layoutMemoryPersister.setGlobalLayout(currentLayout);
+    layoutMemoryPersister.setGlobalLayout(X11Helper::getCurrentLayout());
     layoutMemoryPersister.save();
 
     QDBusConnection dbus = QDBusConnection::sessionBus();
@@ -84,7 +81,6 @@ KeyboardDaemon::~KeyboardDaemon()
     unregisterShortcut();
 
     delete xEventNotifier;
-    delete layoutTrayIcon;
     delete rules;
 }
 
@@ -97,8 +93,6 @@ void KeyboardDaemon::configureKeyboard()
     XkbHelper::initializeKeyboardLayouts(keyboardConfig);
     layoutMemory.configChanged();
 
-    setupTrayIcon();
-
     unregisterShortcut();
     registerShortcut();
 }
@@ -110,25 +104,24 @@ void KeyboardDaemon::configureMouse()
     QProcess::startDetached(QStringLiteral("kcminit"), modules);
 }
 
-void KeyboardDaemon::setupTrayIcon()
-{
-    bool show = keyboardConfig.showIndicator && (keyboardConfig.showSingle || X11Helper::getLayoutsList().size() > 1);
-
-    if (show && !layoutTrayIcon) {
-        layoutTrayIcon = new LayoutTrayIcon(rules, keyboardConfig);
-    } else if (!show && layoutTrayIcon) {
-        delete layoutTrayIcon;
-        layoutTrayIcon = nullptr;
-    }
-}
-
 void KeyboardDaemon::registerShortcut()
 {
     if (actionCollection == nullptr) {
         actionCollection = new KeyboardLayoutActionCollection(this, false);
 
         QAction *toggleLayoutAction = actionCollection->getToggleAction();
-        connect(toggleLayoutAction, &QAction::triggered, this, &KeyboardDaemon::switchToNextLayout);
+        connect(toggleLayoutAction, &QAction::triggered, this, [this]() {
+            switchToNextLayout();
+
+            LayoutUnit newLayout = X11Helper::getCurrentLayout();
+            QDBusMessage msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.plasmashell"),
+                                                              QStringLiteral("/org/kde/osdService"),
+                                                              QStringLiteral("org.kde.osdService"),
+                                                              QStringLiteral("kbdLayoutChanged"));
+            msg << Flags::getLongText(newLayout, rules);
+            QDBusConnection::sessionBus().asyncCall(msg);
+        });
+
         actionCollection->loadLayoutShortcuts(keyboardConfig.layouts, rules);
         // clang-format off
 		connect(actionCollection, SIGNAL(actionTriggered(QAction*)), this, SLOT(setLayout(QAction*)));
@@ -175,28 +168,16 @@ void KeyboardDaemon::unregisterListeners()
 
 void KeyboardDaemon::layoutChangedSlot()
 {
-    // TODO: pass newLayout into layoutTrayIcon?
-    LayoutUnit newLayout = X11Helper::getCurrentLayout();
-
     layoutMemory.layoutChanged();
-    if (layoutTrayIcon != nullptr) {
-        layoutTrayIcon->layoutChanged();
-    }
 
-    if (newLayout != currentLayout) {
-        currentLayout = newLayout;
-        emit layoutChanged(getLayout());
-    }
+    Q_EMIT layoutChanged(getLayout());
 }
 
 void KeyboardDaemon::layoutMapChanged()
 {
     keyboardConfig.load();
     layoutMemory.layoutMapChanged();
-    emit layoutListChanged();
-    if (layoutTrayIcon != nullptr) {
-        layoutTrayIcon->layoutMapChanged();
-    }
+    Q_EMIT layoutListChanged();
 }
 
 void KeyboardDaemon::switchToNextLayout()
@@ -214,13 +195,22 @@ bool KeyboardDaemon::setLayout(QAction *action)
     if (action == actionCollection->getToggleAction())
         return false;
 
-    LayoutUnit layoutUnit(action->data().toString());
-    return LayoutsMenu::switchToLayout(layoutUnit, keyboardConfig); // need this to be able to switch to spare layouts
-    //	return X11Helper::setLayout(LayoutUnit(action->data().toString()));
+    return setLayout(action->data().toUInt());
 }
 
 bool KeyboardDaemon::setLayout(uint index)
 {
+    if (keyboardConfig.layoutLoopCount != KeyboardConfig::NO_LOOPING && index >= uint(keyboardConfig.layoutLoopCount)) {
+        QList<LayoutUnit> layouts = X11Helper::getLayoutsList();
+        if ( int(index) <= keyboardConfig.layouts.lastIndexOf(layouts.takeLast()) ) {
+            // got to a shifted diapason due to previously selected spare layout, so adjusting the index accordingly
+            --index;
+        }
+        // spare layout preempts last one in the loop
+        layouts.append(keyboardConfig.layouts.at(index));
+        XkbHelper::initializeKeyboardLayouts(layouts);
+        index = layouts.size() - 1;
+    }
     return X11Helper::setGroup(index);
 }
 
@@ -233,8 +223,16 @@ QVector<LayoutNames> KeyboardDaemon::getLayoutsList() const
 {
     QVector<LayoutNames> ret;
 
-    const auto layoutsList = X11Helper::getLayoutsList();
-    for (auto &layoutUnit : layoutsList) {
+    auto layoutsList = X11Helper::getLayoutsList();
+    if (keyboardConfig.layoutLoopCount != KeyboardConfig::NO_LOOPING) {
+        // extra layouts list overlaps with the main layouts loop initially by 1 position
+        auto extraLayouts = keyboardConfig.layouts.mid(keyboardConfig.layoutLoopCount - 1);
+        // spare layout currently placed in the loop is removed from the extra layouts
+        // as it was already "moved" to the last loop position
+        extraLayouts.removeOne(layoutsList.last());
+        layoutsList.append(extraLayouts);
+    }
+    for (auto &layoutUnit : std::as_const(layoutsList)) {
         ret.append({layoutUnit.layout(), Flags::getShortText(layoutUnit, keyboardConfig), Flags::getLongText(layoutUnit, rules)});
     }
     return ret;

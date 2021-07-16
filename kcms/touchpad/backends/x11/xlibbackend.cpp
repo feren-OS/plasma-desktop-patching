@@ -38,7 +38,9 @@
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 
+#if HAVE_SYNAPTICS
 #include <synaptics-properties.h>
+#endif
 #include <xserver-properties.h>
 
 struct DeviceListDeleter {
@@ -90,7 +92,9 @@ XlibBackend::XlibBackend(QObject *parent)
     m_touchpadAtom.intern(m_connection, XI_TOUCHPAD);
     m_enabledAtom.intern(m_connection, XI_PROP_ENABLED);
 
+#if HAVE_SYNAPTICS
     m_synapticsIdentifierAtom.intern(m_connection, SYNAPTICS_PROP_CAPABILITIES);
+#endif
     m_libinputIdentifierAtom.intern(m_connection, "libinput Send Events Modes Available");
 
     m_device.reset(findTouchpad());
@@ -120,10 +124,12 @@ XlibTouchpad *XlibBackend::findTouchpad()
                 return new LibinputTouchpad(m_display.data(), info->id);
             }
 #endif
+#if HAVE_SYNAPTICS
             if (*atom == m_synapticsIdentifierAtom.atom()) {
                 setMode(TouchpadInputBackendMode::XSynaptics);
                 return new SynapticsTouchpad(m_display.data(), info->id);
             }
+#endif
         }
     }
 
@@ -216,9 +222,9 @@ void XlibBackend::setTouchpadEnabled(bool enable)
 
     // FIXME? This should not be needed, m_notifications should trigger
     // a propertyChanged signal when we enable/disable the touchpad,
-    // that will emit touchpadStateChanged, but for some reason
+    // that will Q_EMIT touchpadStateChanged, but for some reason
     // XlibNotifications is not getting the property change events
-    // so we just emit touchpadStateChanged from here as a workaround
+    // so we just Q_EMIT touchpadStateChanged from here as a workaround
     Q_EMIT touchpadStateChanged();
 }
 
@@ -352,10 +358,13 @@ QVector<QObject *> XlibBackend::getDevices() const
     }
 #endif
 
+#if HAVE_SYNAPTICS
     SynapticsTouchpad *synaptics = dynamic_cast<SynapticsTouchpad *>(m_device.data());
     if (synaptics) {
         touchpads.push_back(synaptics);
     }
+#endif
+
     return touchpads;
 }
 

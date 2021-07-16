@@ -33,6 +33,7 @@ Free Software Foundation, Inc.,
 #include <QDBusPendingCall>
 #include <QGuiApplication>
 #include <QMetaEnum>
+#include <QUuid>
 #include <QScreen>
 
 #include <KWindowSystem>
@@ -156,7 +157,7 @@ void PagerModel::Private::refreshDataSource()
         QObject::disconnect(virtualDesktopNamesConn);
         virtualDesktopNamesConn = QObject::connect(virtualDesktopInfo, &VirtualDesktopInfo::desktopNamesChanged, q, [this]() {
             if (q->rowCount()) {
-                emit q->dataChanged(q->index(0, 0), q->index(q->rowCount() - 1, 0), QVector<int>{Qt::DisplayRole});
+                Q_EMIT q->dataChanged(q->index(0, 0), q->index(q->rowCount() - 1, 0), QVector<int>{Qt::DisplayRole});
             }
         });
 
@@ -183,7 +184,7 @@ void PagerModel::Private::refreshDataSource()
         QObject::connect(activityInfo, &ActivityInfo::currentActivityChanged, q, &PagerModel::currentPageChanged, Qt::UniqueConnection);
     }
 
-    emit q->currentPageChanged();
+    Q_EMIT q->currentPageChanged();
 }
 
 PagerModel::PagerModel(QObject *parent)
@@ -251,8 +252,8 @@ void PagerModel::setPagerType(PagerType type)
 
         refresh();
 
-        emit pagerTypeChanged();
-        emit shouldShowPagerChanged();
+        Q_EMIT pagerTypeChanged();
+        Q_EMIT shouldShowPagerChanged();
     }
 }
 
@@ -266,7 +267,7 @@ void PagerModel::setEnabled(bool enabled)
     if (enabled && !d->enabled) {
         refresh();
         d->enabled = true;
-        emit enabledChanged();
+        Q_EMIT enabledChanged();
     } else if (!enabled && d->enabled) {
         beginResetModel();
 
@@ -281,9 +282,9 @@ void PagerModel::setEnabled(bool enabled)
         endResetModel();
 
         d->enabled = false;
-        emit enabledChanged();
+        Q_EMIT enabledChanged();
 
-        emit countChanged();
+        Q_EMIT countChanged();
     }
 }
 
@@ -302,7 +303,7 @@ void PagerModel::setShowDesktop(bool show)
     if (d->showDesktop != show) {
         d->showDesktop = show;
 
-        emit showDesktopChanged();
+        Q_EMIT showDesktopChanged();
     }
 }
 
@@ -317,12 +318,12 @@ void PagerModel::setShowOnlyCurrentScreen(bool show)
         d->showOnlyCurrentScreen = show;
 
         if (d->screenGeometry.isValid()) {
-            emit pagerItemSizeChanged();
+            Q_EMIT pagerItemSizeChanged();
 
             refresh();
         }
 
-        emit showOnlyCurrentScreenChanged();
+        Q_EMIT showOnlyCurrentScreenChanged();
     }
 }
 
@@ -337,12 +338,12 @@ void PagerModel::setScreenGeometry(const QRect &geometry)
         d->screenGeometry = geometry;
 
         if (d->showOnlyCurrentScreen) {
-            emit pagerItemSizeChanged();
+            Q_EMIT pagerItemSizeChanged();
 
             refresh();
         }
 
-        emit showOnlyCurrentScreenChanged();
+        Q_EMIT showOnlyCurrentScreenChanged();
     }
 }
 
@@ -446,10 +447,10 @@ void PagerModel::refresh()
 
     endResetModel();
 
-    emit countChanged();
+    Q_EMIT countChanged();
 }
 
-void PagerModel::moveWindow(int window,
+void PagerModel::moveWindow(const QVariant &window,
                             double x,
                             double y,
                             const QVariant &targetItemId,
@@ -459,7 +460,7 @@ void PagerModel::moveWindow(int window,
 {
 #if HAVE_X11
     if (KWindowSystem::isPlatformX11()) {
-        const WId windowId = (WId)window;
+        const WId windowId = window.toUInt();
 
         QPointF dest(x / widthScaleFactor, y / heightScaleFactor);
 
@@ -527,8 +528,7 @@ void PagerModel::moveWindow(int window,
                 }
 
                 const QVariantList &winIds = idx.data(TaskManager::AbstractTasksModel::WinIdList).toList();
-
-                if (!winIds.isEmpty() && winIds.at(0).toInt() == window) {
+                if (!winIds.isEmpty() && winIds.at(0) == window) {
                     tasksModel->requestVirtualDesktops(idx, QVariantList() << targetItemId.toString());
                     break;
                 }
@@ -613,14 +613,14 @@ void PagerModel::drop(QMimeData *mimeData, int modifiers, const QVariant &itemId
     if (KWindowSystem::isPlatformWayland()) {
         bool ok;
 
-        const QList<quint32> &ids = TaskManager::WaylandTasksModel::winIdsFromMimeData(mimeData, &ok);
+        const QList<QUuid> &ids = TaskManager::WaylandTasksModel::winIdsFromMimeData(mimeData, &ok);
 
         if (!ok) {
             return;
         }
 
         if (d->pagerType == VirtualDesktops) {
-            for (const quint32 &id : ids) {
+            for (const QUuid &id : ids) {
                 QAbstractItemModel *model = d->windowModels.at(0)->sourceModel();
                 TaskManager::WindowTasksModel *tasksModel = static_cast<TaskManager::WindowTasksModel *>(model);
 
@@ -632,8 +632,7 @@ void PagerModel::drop(QMimeData *mimeData, int modifiers, const QVariant &itemId
                     }
 
                     const QVariantList &winIds = idx.data(TaskManager::AbstractTasksModel::WinIdList).toList();
-
-                    if (!winIds.isEmpty() && winIds.at(0).toUInt() == id) {
+                    if (!winIds.isEmpty() && winIds.at(0).value<QUuid>() == id) {
                         tasksModel->requestVirtualDesktops(idx, QVariantList() << itemId.toString());
                         break;
                     }

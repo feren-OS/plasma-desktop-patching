@@ -28,7 +28,6 @@
 #include "layoutnames.h"
 
 class XInputEventNotifier;
-class LayoutTrayIcon;
 class KeyboardConfig;
 struct Rules;
 
@@ -40,16 +39,13 @@ class Q_DECL_EXPORT KeyboardDaemon : public KDEDModule
     KeyboardConfig keyboardConfig;
     KeyboardLayoutActionCollection *actionCollection;
     XInputEventNotifier *xEventNotifier;
-    LayoutTrayIcon *layoutTrayIcon;
     LayoutMemory layoutMemory;
-    LayoutUnit currentLayout;
     const Rules *rules;
 
     void registerListeners();
     void registerShortcut();
     void unregisterListeners();
     void unregisterShortcut();
-    void setupTrayIcon();
 
 private Q_SLOTS:
     void configureKeyboard();

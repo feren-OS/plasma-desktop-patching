@@ -43,6 +43,7 @@ Item {
     property alias cfg_showOnlyCurrentActivity: showOnlyCurrentActivity.checked
     property alias cfg_showOnlyMinimized: showOnlyMinimized.checked
     property alias cfg_minimizeActiveTaskOnClick: minimizeActive.checked
+    property alias cfg_unhideOnAttention: unhideOnAttention.checked
 
     TaskManagerApplet.Backend {
         id: backend
@@ -78,21 +79,21 @@ Item {
         // "You asked for Tooltips but Tooltips are disabled" message
         Kirigami.InlineMessage {
             Layout.fillWidth: true
-            visible: groupedTaskVisualization.currentIndex === 1 && !plasmoid.configuration.showToolTips && backend.canPresentWindows()
+            visible: groupedTaskVisualization.currentIndex === 1 && !plasmoid.configuration.showToolTips && backend.canPresentWindows
             type: Kirigami.MessageType.Warning
             text: i18n("Tooltips are disabled, so the 'Present Windows' effect will be displayed instead.")
         }
         // "You asked for Tooltips but Tooltips are disabled and Present Windows is not available" message
         Kirigami.InlineMessage {
             Layout.fillWidth: true
-            visible: groupedTaskVisualization.currentIndex === 1 && !plasmoid.configuration.showToolTips && !backend.canPresentWindows()
+            visible: groupedTaskVisualization.currentIndex === 1 && !plasmoid.configuration.showToolTips && !backend.canPresentWindows
             type: Kirigami.MessageType.Warning
             text: i18n("Tooltips are disabled, and the 'Present Windows' effect is not enabled or otherwise available right now, so a textual list will be displayed instead")
         }
         // "You asked for Present Windows but Present Windows is not available" message
         Kirigami.InlineMessage {
             Layout.fillWidth: true
-            visible: groupedTaskVisualization.currentIndex === 2 && !backend.canPresentWindows()
+            visible: groupedTaskVisualization.currentIndex === 2 && !backend.canPresentWindows
             type: Kirigami.MessageType.Warning
             text: i18n("The 'Present Windows' effect is not enabled or otherwise available right now, so a textual list will be displayed instead.")
         }
@@ -122,7 +123,6 @@ Item {
 
         ComboBox {
             id: sortingStrategy
-            visible: (plasmoid.pluginName !== "org.kde.plasma.icontasks")
             Kirigami.FormData.label: i18n("Sort:")
             Layout.fillWidth: true
             Layout.minimumWidth: Kirigami.Units.gridUnit * 14
@@ -195,6 +195,16 @@ Item {
         CheckBox {
             id: showOnlyMinimized
             text: i18n("That are minimized")
+        }
+
+        Item {
+            Kirigami.FormData.isSection: true
+        }
+
+        CheckBox {
+            id: unhideOnAttention
+            Kirigami.FormData.label: i18n("Panel Hiding:")
+            text: i18n("Unhide when a window wants attention")
         }
     }
 }

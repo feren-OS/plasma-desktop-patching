@@ -28,7 +28,6 @@ import org.kde.kirigami 2.5 as Kirigami
 ColumnLayout {
 
     property string cfg_icon: plasmoid.configuration.icon
-    property alias cfg_switchTabsOnHover: switchTabsOnHoverCheckbox.checked
     property int cfg_favoritesDisplay: plasmoid.configuration.favoritesDisplay
     property alias cfg_gridAllowTwoLines: gridAllowTwoLines.checked
     property alias cfg_alphaSort: alphaSort.checked
@@ -91,12 +90,6 @@ ColumnLayout {
         }
 
         CheckBox {
-            id: switchTabsOnHoverCheckbox
-            Kirigami.FormData.label: i18n("General:")
-            text: i18n("Switch tabs on hover")
-        }
-
-        CheckBox {
             id: alphaSort
             text: i18n("Always sort applications alphabetically")
         }
@@ -130,7 +123,7 @@ ColumnLayout {
 
         CheckBox {
             id: gridAllowTwoLines
-            text: i18n("Allow label to have two lines")
+            text: i18n("Allow labels to have two lines")
             enabled: showFavoritesInGrid.checked
         }
 

@@ -43,6 +43,10 @@ public:
     BalooSettings *balooSettings() const;
     FilteredFolderModel *filteredModel() const;
 
+    Q_INVOKABLE void deleteIndex();
+    Q_INVOKABLE int rawIndexFileSize();
+    Q_INVOKABLE QString prettyIndexFileSize();
+
 public Q_SLOTS:
     void load() override;
     void save() override;

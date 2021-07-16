@@ -22,6 +22,7 @@
 
 #include <QCoreApplication>
 #include <QDebug>
+#include <QTimer>
 #include <QX11Info>
 
 #include <X11/X.h>
@@ -54,8 +55,20 @@ XInputEventNotifier::XInputEventNotifier(QWidget *parent)
     , // TODO: destruct properly?
     xinputEventType(-1)
     , udevNotifier(nullptr)
+    , keyboardNotificationTimer(new QTimer(this))
+    , mouseNotificationTimer(new QTimer(this))
 {
     Q_UNUSED(parent)
+
+    // Q_EMIT signal only once, even after X11 re-enables N keyboards after resuming from suspend
+    keyboardNotificationTimer->setSingleShot(true);
+    keyboardNotificationTimer->setInterval(500);
+    connect(keyboardNotificationTimer, &QTimer::timeout, this, &XInputEventNotifier::newKeyboardDevice);
+
+    // same for mouse
+    mouseNotificationTimer->setSingleShot(true);
+    mouseNotificationTimer->setInterval(500);
+    connect(mouseNotificationTimer, &QTimer::timeout, this, &XInputEventNotifier::newPointerDevice);
 }
 
 void XInputEventNotifier::start()
@@ -76,10 +89,17 @@ bool XInputEventNotifier::processOtherEvents(xcb_generic_event_t *event)
 {
     int newDeviceType = getNewDeviceEventType(event);
     if (newDeviceType == DEVICE_KEYBOARD) {
-        Q_EMIT emit(newKeyboardDevice());
+        if (!keyboardNotificationTimer->isActive()) {
+            keyboardNotificationTimer->start();
+        }
     } else if (newDeviceType == DEVICE_POINTER) {
-        Q_EMIT emit(newPointerDevice());
-        Q_EMIT emit(newKeyboardDevice()); // arghhh, looks like X resets xkb map even when only pointer device is connected
+        if (!mouseNotificationTimer->isActive()) {
+            mouseNotificationTimer->start();
+        }
+        // arghhh, looks like X resets xkb map even when only pointer device is connected
+        if (!keyboardNotificationTimer->isActive()) {
+            keyboardNotificationTimer->start();
+        }
     }
     return true;
 }
@@ -91,7 +111,7 @@ bool XInputEventNotifier::processOtherEvents(xcb_generic_event_t *event)
 static bool isRealKeyboard(const char *deviceName)
 {
     return strstr(deviceName, "Video Bus") == nullptr && strstr(deviceName, "Sleep Button") == nullptr && strstr(deviceName, "Power Button") == nullptr
-        && strstr(deviceName, "WMI hotkeys") == nullptr;
+        && strstr(deviceName, "WMI hotkeys") == nullptr && strstr(deviceName, "Camera") == nullptr;
 }
 
 int XInputEventNotifier::getNewDeviceEventType(xcb_generic_event_t *event)
@@ -150,7 +170,7 @@ int XInputEventNotifier::registerForNewDeviceEvent(Display * /*display*/)
         udevNotifier = new UdevDeviceNotifier(this);
         connect(udevNotifier, &UdevDeviceNotifier::newKeyboardDevice, this, &XInputEventNotifier::newKeyboardDevice);
         connect(udevNotifier, &UdevDeviceNotifier::newPointerDevice, this, &XInputEventNotifier::newPointerDevice);
-        // Same as with XInput notifier, also emit newKeyboardDevice when pointer device is found
+        // Same as with XInput notifier, also Q_EMIT newKeyboardDevice when pointer device is found
         connect(udevNotifier, &UdevDeviceNotifier::newPointerDevice, this, &XInputEventNotifier::newKeyboardDevice);
     }
 

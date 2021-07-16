@@ -74,6 +74,7 @@ Item {
             filterByActivity: true
             filterNotMaximized: true
             filterByScreen: true
+            filterHidden: true
 
             screenGeometry: panel.screenGeometry
             virtualDesktop: virtualDesktopInfo.currentDesktop
@@ -115,7 +116,7 @@ Item {
                     properties: "opacity"
                     from: 1
                     to: 0
-                    duration: units.veryLongDuration
+                    duration: PlasmaCore.Units.veryLongDuration
                     easing.type: Easing.InOutQuad
                 }
                 ScriptAction {
@@ -141,7 +142,7 @@ Item {
                     properties: "opacity"
                     from: 0
                     to: 1
-                    duration: units.veryLongDuration
+                    duration: PlasmaCore.Units.veryLongDuration
                     easing.type: Easing.InOutQuad
                 }
                 ScriptAction {
@@ -165,11 +166,14 @@ Item {
             } else {
                 mstate = "transparent"
             }
-            if (mstate == 'opaque') {
-                containment.containmentDisplayHints |= PlasmaCore.Types.DesktopFullyCovered;
-            } else {
-                containment.containmentDisplayHints &= ~PlasmaCore.Types.DesktopFullyCovered;
+            if (containment) {
+                if (mstate == 'opaque') {
+                    containment.containmentDisplayHints |= PlasmaCore.Types.DesktopFullyCovered;
+                } else {
+                    containment.containmentDisplayHints &= ~PlasmaCore.Types.DesktopFullyCovered;
+                }
             }
+
             return mstate;
         })
     }

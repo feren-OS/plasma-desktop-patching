@@ -144,7 +144,7 @@ QVariant FilteredFolderModel::data(const QModelIndex &idx, int role) const
     case EnableIndex:
         return entry.enableIndex;
     case Deletable:
-        return entry.isFromConfig;
+        return entry.isFromConfig && entry.url != normalizeTrailingSlashes(QDir::homePath());
     default:
         return {};
     }
@@ -159,7 +159,7 @@ bool FilteredFolderModel::setData(const QModelIndex &idx, const QVariant &value,
     if (role == EnableIndex) {
         entry.enableIndex = value.toBool();
         syncFolderConfig(entry);
-        emit dataChanged(idx, idx);
+        Q_EMIT dataChanged(idx, idx);
         return true;
     }
     return false;

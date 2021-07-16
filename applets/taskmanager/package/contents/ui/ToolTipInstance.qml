@@ -107,7 +107,7 @@ ColumnLayout {
                 elide: Text.ElideRight
                 text: generateTitle()
                 opacity: 0.75
-                visible: !hasPlayer && text.length !== 0 && text !== appNameHeading.text
+                visible: text.length !== 0 && text !== appNameHeading.text && (!hasPlayer || !text.includes(songText.text))
             }
             // subtext
             PlasmaComponents.Label {
@@ -142,8 +142,6 @@ ColumnLayout {
             Layout.alignment: Qt.AlignRight | Qt.AlignTop
             visible: isWin
             icon.name: "window-close"
-            icon.width: PlasmaCore.Units.iconSizes.small
-            icon.height: PlasmaCore.Units.iconSizes.small
             onClicked: {
                 backend.cancelHighlightWindows();
                 tasksModel.requestClose(submodelIndex);
@@ -172,9 +170,13 @@ ColumnLayout {
         }
 
         PlasmaCore.WindowThumbnail {
+            id: x11Thumbnail
+
             anchors.fill: hoverHandler
-            // Indent by one pixel to make sure we never cover up the entire highlight
-            anchors.margins: 1
+            // Indent a little bit so that neither the thumbnail nor the drop
+            // shadow can cover up the highlight
+            anchors.margins: PlasmaCore.Units.smallSpacing * 2
+
 
             visible: !albumArtImage.visible && !thumbnailSourceItem.isMinimized && Number.isInteger(thumbnailSourceItem.winId)
             winId: Number.isInteger(thumbnailSourceItem.winId) ? thumbnailSourceItem.winId : 0
@@ -183,12 +185,25 @@ ColumnLayout {
         Loader {
             id: pipeWireLoader
             anchors.fill: hoverHandler
-            anchors.margins: 1
+            // Indent a little bit so that neither the thumbnail nor the drop
+            // shadow can cover up the highlight
+            anchors.margins: PlasmaCore.Units.smallSpacing * 2
 
             active: !albumArtImage.visible && !Number.isInteger(thumbnailSourceItem.winId)
 
             //In a loader since we might not have PipeWire available yet
             source: "PipeWireThumbnail.qml"
+        }
+
+        DropShadow {
+            anchors.fill: pipeWireLoader.active ? pipeWireLoader : x11Thumbnail
+            visible: pipeWireLoader.active ? pipeWireLoader.item.visible : x11Thumbnail.visible
+            horizontalOffset: 0
+            verticalOffset: Math.round(3 * PlasmaCore.Units.devicePixelRatio)
+            radius: Math.round(8.0 * PlasmaCore.Units.devicePixelRatio)
+            samples: Math.round(radius * 1.5)
+            color: "Black"
+            source: pipeWireLoader.active ? pipeWireLoader.item : x11Thumbnail
         }
 
         Image {
@@ -197,6 +212,7 @@ ColumnLayout {
             anchors.fill: parent
             fillMode: Image.PreserveAspectCrop
             visible: albumArtImage.available
+            asynchronous: true
             layer.enabled: true
             opacity: 0.25
             layer.effect: FastBlur {
@@ -296,7 +312,7 @@ ColumnLayout {
                     lineHeight: 1
                     elide: parent.state ? Text.ElideNone : Text.ElideRight
                     text: artist || ""
-                    font: theme.smallestFont
+                    font: PlasmaCore.Theme.smallestFont
                 }
             }
         }
@@ -375,16 +391,17 @@ ColumnLayout {
 
         var subTextEntries = [];
 
-        var virtualDesktops = isGroup ? VirtualDesktops : virtualDesktopParent;
-        var virtualDesktopNameList = new Array();
-
-        for (var i = 0; i < virtualDesktops.length; ++i) {
-            virtualDesktopNameList.push(virtualDesktopInfo.desktopNames[virtualDesktopInfo.desktopIds.indexOf(virtualDesktops[i])]);
-        }
-
         var onAllDesktops = (isGroup ? IsOnAllVirtualDesktops : isOnAllVirtualDesktopsParent) === true;
         if (!plasmoid.configuration.showOnlyCurrentDesktop && virtualDesktopInfo.numberOfDesktops > 1) {
-            if (!onAllDesktops && virtualDesktops.length > 0) {
+            var virtualDesktops = isGroup ? VirtualDesktops : virtualDesktopParent;
+
+            if (!onAllDesktops && virtualDesktops !== undefined && virtualDesktops.length > 0) {
+                var virtualDesktopNameList = new Array();
+
+                for (var i = 0; i < virtualDesktops.length; ++i) {
+                    virtualDesktopNameList.push(virtualDesktopInfo.desktopNames[virtualDesktopInfo.desktopIds.indexOf(virtualDesktops[i])]);
+                }
+
                 subTextEntries.push(i18nc("Comma-separated list of desktops", "On %1",
                     virtualDesktopNameList.join(", ")));
             } else if (onAllDesktops) {

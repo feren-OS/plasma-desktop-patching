@@ -130,9 +130,8 @@ MouseArea {
         filterByActivity: plasmoid.configuration.showOnlyCurrentActivity
         filterNotMinimized: plasmoid.configuration.showOnlyMinimized
 
-        sortMode: iconsOnly ? TaskManager.TasksModel.SortManual
-            : sortModeEnumValue(plasmoid.configuration.sortingStrategy)
-        launchInPlace: iconsOnly
+        sortMode: sortModeEnumValue(plasmoid.configuration.sortingStrategy)
+        launchInPlace: iconsOnly && plasmoid.configuration.sortingStrategy === 1
         separateLaunchers: {
             if (!iconsOnly && !plasmoid.configuration.separateLaunchers
                 && plasmoid.configuration.sortingStrategy === 1) {
@@ -221,7 +220,6 @@ MouseArea {
         id: backend
 
         taskManagerItem: tasks
-        toolTipItem: toolTipDelegate
         groupDialog: groupDialog
         highlightWindows: plasmoid.configuration.highlightWindows
 
@@ -326,7 +324,7 @@ MouseArea {
     Binding {
         target: plasmoid
         property: "status"
-        value: (tasksModel.anyTaskDemandsAttention
+        value: (tasksModel.anyTaskDemandsAttention && plasmoid.configuration.unhideOnAttention
             ? PlasmaCore.Types.NeedsAttentionStatus : PlasmaCore.Types.PassiveStatus)
         restoreMode: Binding.RestoreBinding
     }
@@ -409,10 +407,14 @@ MouseArea {
             tasksModel.requestOpenUrls(hoveredItem.modelIndex(), urlsList);
         }
     }
-
+    
     ToolTipDelegate {
-        id: toolTipDelegate
-
+        id: openWindowToolTipDelegate
+        visible: false
+    }
+    
+    ToolTipDelegate {
+        id: pinnedAppToolTipDelegate
         visible: false
     }
 
@@ -462,7 +464,8 @@ MouseArea {
             onItemAdded: taskList.layout()
             onItemRemoved: {
                 if (tasks.containsMouse && index != taskRepeater.count &&
-                    item.winIdList.length > 0 && taskClosedWithMouseMiddleButton.indexOf(item.winIdList[0]) > -1) {
+                    item.winIdList && item.winIdList.length > 0 &&
+                    taskClosedWithMouseMiddleButton.indexOf(item.winIdList[0]) > -1) {
                     needLayoutRefresh = true;
                 } else {
                     taskList.layout();

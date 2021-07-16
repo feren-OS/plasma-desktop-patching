@@ -29,8 +29,8 @@ import org.kde.private.kcms.keys 2.0 as Private
 
 KCM.AbstractKCM {
     id: root
-    implicitWidth: 800
-    implicitHeight: 600
+    implicitWidth: Kirigami.Units.gridUnit * 44
+    implicitHeight: Kirigami.Units.gridUnit * 33
     property alias exportActive: exportInfo.visible
     readonly property bool errorOccured: kcm.lastError != ""
     ColumnLayout {
@@ -87,12 +87,13 @@ KCM.AbstractKCM {
             columns: 2
             QQC2.ScrollView {
                 Component.onCompleted:  background.visible = true
-                Layout.preferredWidth: 300
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 15
                 Layout.fillHeight:true
                 ListView {
                     id: components
                     clip: true
                     model: kcm.filteredModel
+                    activeFocusOnTab: true
                     add: Transition {
                         id: transition
                         PropertyAction {
@@ -101,12 +102,17 @@ KCM.AbstractKCM {
                             value: transition.ViewTransition.index
                         }
                     }
+
+                    // We're using a custom list delegate because we want to be
+                    // able to control the opacity of the icon and text independently
+                    // from everything else, which BasicListItem doesn't offer
                     delegate: Kirigami.AbstractListItem {
                         id: componentDelegate
                         readonly property color foregroundColor: ListView.isCurrentItem ? activeTextColor : textColor
                         KeyNavigation.right: shortcutsList
                         height: Kirigami.Units.iconSizes.small + 2 * Kirigami.Units.smallSpacing + topPadding + bottomPadding
                         RowLayout {
+                        spacing: Kirigami.Units.smallSpacing
                             Kirigami.Icon {
                                 id: appIcon
                                 source: model.decoration
@@ -118,15 +124,17 @@ KCM.AbstractKCM {
                             QQC2.Label {
                                 Layout.fillWidth: true
                                 text: model.display
+                                elide: Text.ElideRight
                                 color: foregroundColor
                                 opacity: model.pendingDeletion ? 0.3 : 1
                             }
                             QQC2.ToolButton {
                                 Layout.preferredHeight: Kirigami.Units.iconSizes.small + 2 * Kirigami.Units.smallSpacing
                                 Layout.preferredWidth: Layout.preferredHeight
-                                visible: model.section != i18n("Common Actions") && !exportActive && !model.pendingDeletion
-                                opacity: componentDelegate.containsMouse || componentDelegate.ListView.isCurrentItem ? 1 : 0
-                                enabled: opacity
+                                visible: model.section != i18n("Common Actions") // FIXME: don't compare translated strings
+                                         && !exportActive
+                                         && !model.pendingDeletion
+                                         && (componentDelegate.containsMouse || componentDelegate.ListView.isCurrentItem)
                                 icon.name: "edit-delete"
                                 icon.width: Kirigami.Units.iconSizes.small
                                 onClicked: model.pendingDeletion = true
@@ -168,6 +176,8 @@ KCM.AbstractKCM {
                         QQC2.CheckBox {
                             id: sectionCheckbox
                             Layout.alignment: Qt.AlignRight
+                            // width of indicator + layout spacing
+                            Layout.rightMargin: kcm.defaultsIndicatorsVisible ? Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing : 0
                             visible: exportActive
                             onToggled: {
                                 const checked = sectionCheckbox.checked
@@ -210,6 +220,7 @@ KCM.AbstractKCM {
                             id: dm
                             model: rootIndex.valid ?  kcm.filteredModel : undefined
                             delegate: ShortcutActionDelegate {}
+                            KeyNavigation.left: components
                         }
                     }
                 }

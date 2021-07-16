@@ -58,6 +58,7 @@ MouseArea {
     readonly property bool smartLauncherEnabled: !inPopup && model.IsStartup !== true
     property QtObject smartLauncherItem: null
     property alias toolTipAreaItem: toolTipArea
+    property alias audioStreamIconLoaderItem: audioStreamIconLoader
 
     property Item audioStreamOverlay
     property var audioStreams: []
@@ -74,6 +75,11 @@ MouseArea {
     readonly property bool highlighted: (inPopup && activeFocus) || (!inPopup && containsMouse)
         || (task.contextMenu && task.contextMenu.status === PlasmaComponents.DialogStatus.Open)
         || (groupDialog.visible && groupDialog.visualParent === task)
+        
+    onHighlightedChanged: {
+        // ensure it doesn't get stuck with a window highlighted
+        backend.cancelHighlightWindows();
+    }
 
     function showToolTip() {
         toolTipArea.showToolTip();
@@ -127,10 +133,6 @@ MouseArea {
             }
         } else {
             pressed = false;
-        }
-
-        if (model.IsWindow === true) {
-            tasks.windowsHovered(model.WinIdList, containsMouse);
         }
     }
 
@@ -341,58 +343,58 @@ MouseArea {
             active: !inPopup && !groupDialog.visible && plasmoid.configuration.showToolTips
             interactive: true
 
-            mainItem: toolTipDelegate
+            mainItem: (model.IsWindow === true) ? openWindowToolTipDelegate : pinnedAppToolTipDelegate
 
             onContainsMouseChanged:  {
                 if (containsMouse) {
-                    toolTipDelegate.parentTask = task;
-                    toolTipDelegate.rootIndex = tasksModel.makeModelIndex(itemIndex, -1);
+                    mainItem.parentTask = task;
+                    mainItem.rootIndex = tasksModel.makeModelIndex(itemIndex, -1);
 
-                    toolTipDelegate.appName = Qt.binding(function() {
+                    mainItem.appName = Qt.binding(function() {
                         return model.AppName;
                     });
-                    toolTipDelegate.pidParent = Qt.binding(function() {
+                    mainItem.pidParent = Qt.binding(function() {
                         return model.AppPid !== undefined ? model.AppPid : 0;
                     });
-                    toolTipDelegate.windows = Qt.binding(function() {
+                    mainItem.windows = Qt.binding(function() {
                         return model.WinIdList;
                     });
-                    toolTipDelegate.isGroup = Qt.binding(function() {
+                    mainItem.isGroup = Qt.binding(function() {
                         return model.IsGroupParent === true;
                     });
-                    toolTipDelegate.icon = Qt.binding(function() {
+                    mainItem.icon = Qt.binding(function() {
                         return model.decoration;
                     });
-                    toolTipDelegate.launcherUrl = Qt.binding(function() {
+                    mainItem.launcherUrl = Qt.binding(function() {
                         return model.LauncherUrlWithoutIcon;
                     });
-                    toolTipDelegate.isLauncher = Qt.binding(function() {
+                    mainItem.isLauncher = Qt.binding(function() {
                         return model.IsLauncher === true;
                     });
-                    toolTipDelegate.isMinimizedParent = Qt.binding(function() {
+                    mainItem.isMinimizedParent = Qt.binding(function() {
                         return model.IsMinimized === true;
                     });
-                    toolTipDelegate.displayParent = Qt.binding(function() {
+                    mainItem.displayParent = Qt.binding(function() {
                         return model.display;
                     });
-                    toolTipDelegate.genericName = Qt.binding(function() {
+                    mainItem.genericName = Qt.binding(function() {
                         return model.GenericName;
                     });
-                    toolTipDelegate.virtualDesktopParent = Qt.binding(function() {
+                    mainItem.virtualDesktopParent = Qt.binding(function() {
                         return (model.VirtualDesktops !== undefined && model.VirtualDesktops.length > 0) ? model.VirtualDesktops : [0];
                     });
-                    toolTipDelegate.isOnAllVirtualDesktopsParent = Qt.binding(function() {
+                    mainItem.isOnAllVirtualDesktopsParent = Qt.binding(function() {
                         return model.IsOnAllVirtualDesktops === true;
                     });
-                    toolTipDelegate.activitiesParent = Qt.binding(function() {
+                    mainItem.activitiesParent = Qt.binding(function() {
                         return model.Activities;
                     });
 
-                    toolTipDelegate.smartLauncherCountVisible = Qt.binding(function() {
+                    mainItem.smartLauncherCountVisible = Qt.binding(function() {
                         return task.smartLauncherItem && task.smartLauncherItem.countVisible;
                     });
-                    toolTipDelegate.smartLauncherCount = Qt.binding(function() {
-                        return toolTipDelegate.smartLauncherCountVisible ? task.smartLauncherItem.count : 0;
+                    mainItem.smartLauncherCount = Qt.binding(function() {
+                        return mainItem.smartLauncherCountVisible ? task.smartLauncherItem.count : 0;
                     });
                 }
             }

@@ -217,7 +217,7 @@ void XlibConfig::load()
     mk_curve->setValue(group.readEntry("MKCurve", 0));
 
     checkAccess();
-    emit m_parent->changed(false);
+    Q_EMIT m_parent->changed(false);
 }
 
 void XlibConfig::save()
@@ -255,7 +255,7 @@ void XlibConfig::save()
     // restart kaccess
     KToolInvocation::startServiceByDesktopName("kaccess");
 
-    emit m_parent->changed(false);
+    Q_EMIT m_parent->changed(false);
 }
 
 void XlibConfig::defaults()
@@ -279,7 +279,7 @@ void XlibConfig::defaults()
     checkAccess();
     m_parent->kcmDefaults();
 
-    m_parent->changed(true);
+    Q_EMIT m_parent->changed(true);
 }
 
 /** No descriptions */

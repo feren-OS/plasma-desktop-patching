@@ -33,14 +33,14 @@
 #include "../touchpadconfigcontainer.h"
 #include "touchpadbackend.h"
 
-#include "version.h"
+#include "plasma_version.h"
 
 TouchpadConfigLibinput::TouchpadConfigLibinput(TouchpadConfigContainer *parent, TouchpadBackend *backend, const QVariantList & /*args*/)
     : TouchpadConfigPlugin(parent, backend)
 {
     KAboutData *data = new KAboutData(QStringLiteral("kcm_touchpad"),
                                       i18n("Touchpad KCM"),
-                                      TOUCHPAD_KCM_VERSION,
+                                      PLASMA_VERSION_STRING,
                                       i18n("System Settings module for managing your touchpad"),
                                       KAboutLicense::GPL_V2,
                                       i18n("Copyright © 2016 Roman Gilg"),
@@ -133,7 +133,7 @@ void TouchpadConfigLibinput::save()
     // load newly written values
     load();
     // in case of error, config still in changed state
-    emit m_parent->changed(m_backend->isChangedConfig());
+    Q_EMIT m_parent->changed(m_backend->isChangedConfig());
 }
 
 void TouchpadConfigLibinput::defaults()
@@ -149,7 +149,7 @@ void TouchpadConfigLibinput::defaults()
         m_errorMessage->animatedShow();
     }
     QMetaObject::invokeMethod(m_view->rootObject(), "syncValuesFromBackend");
-    emit m_parent->changed(m_backend->isChangedConfig());
+    Q_EMIT m_parent->changed(m_backend->isChangedConfig());
 }
 
 void TouchpadConfigLibinput::onChange()
@@ -158,7 +158,7 @@ void TouchpadConfigLibinput::onChange()
         return;
     }
     hideErrorMessage();
-    emit m_parent->changed(m_backend->isChangedConfig());
+    Q_EMIT m_parent->changed(m_backend->isChangedConfig());
 }
 
 void TouchpadConfigLibinput::onTouchpadAdded(bool success)
@@ -206,7 +206,7 @@ void TouchpadConfigLibinput::onTouchpadRemoved(int index)
     QMetaObject::invokeMethod(m_view->rootObject(), "resetModel", Q_ARG(QVariant, activeIndex));
     QMetaObject::invokeMethod(rootObj, "syncValuesFromBackend");
 
-    emit m_parent->changed(m_backend->isChangedConfig());
+    Q_EMIT m_parent->changed(m_backend->isChangedConfig());
 }
 
 void TouchpadConfigLibinput::hideErrorMessage()

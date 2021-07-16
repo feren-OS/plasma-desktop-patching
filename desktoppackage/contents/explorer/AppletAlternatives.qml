@@ -21,7 +21,8 @@ import QtQuick.Controls 2.5 as QQC2
 import QtQuick.Layouts 1.1
 import QtQuick.Window 2.1
 import org.kde.plasma.core 2.0 as PlasmaCore
-import org.kde.plasma.components 2.0 as PlasmaComponents
+import org.kde.plasma.components 2.0 as PlasmaComponents // for Highlight
+import org.kde.plasma.components 3.0 as PlasmaComponents3
 import org.kde.plasma.extras 2.0 as PlasmaExtras
 
 import org.kde.plasma.private.shell 2.0
@@ -94,7 +95,6 @@ PlasmaCore.Dialog {
         }
 
         PlasmaExtras.ScrollArea {
-            id: scrollArea
             Layout.fillWidth: true
             Layout.fillHeight: true
 
@@ -110,8 +110,9 @@ PlasmaCore.Dialog {
                 highlightMoveDuration : 0
                 highlightResizeDuration: 0
 
-                delegate: PlasmaComponents.ListItem {
-                    enabled: true
+                delegate: PlasmaExtras.ListItem {
+                    implicitHeight: PlasmaCore.Units.iconSizes.huge + PlasmaCore.Units.smallSpacing * 2
+
                     onClicked: mainList.currentIndex = index
 
                     Component.onCompleted: {
@@ -130,30 +131,30 @@ PlasmaCore.Dialog {
                         }
                     }
 
-                    RowLayout {
-                        x: 2 * PlasmaCore.Units.smallSpacing
-                        width: parent.width - 2 * x
+                    contentItem: RowLayout {
                         spacing: PlasmaCore.Units.largeSpacing
+
                         PlasmaCore.IconItem {
-                            Layout.preferredWidth: PlasmaCore.Units.iconSizes.huge
-                            Layout.preferredHeight: PlasmaCore.Units.iconSizes.huge
+                            implicitWidth: PlasmaCore.Units.iconSizes.huge
+                            implicitHeight: PlasmaCore.Units.iconSizes.huge
                             source: model.decoration
                         }
 
                         ColumnLayout {
-                            height: parent.height
+                            Layout.fillHeight: true
                             Layout.fillWidth: true
+
                             PlasmaExtras.Heading {
                                 level: 4
                                 Layout.fillWidth: true
                                 text: model.name
-                                wrapMode: Text.NoWrap
                                 elide: Text.ElideRight
                             }
-                            PlasmaComponents.Label {
+                            PlasmaComponents3.Label {
                                 Layout.fillWidth: true
                                 text: model.description
-                                font: theme.smallestFont
+                                font: PlasmaCore.Theme.smallestFont
+                                opacity: 0.6
                                 maximumLineCount: 2
                                 wrapMode: Text.WordWrap
                                 elide: Text.ElideRight
@@ -167,7 +168,7 @@ PlasmaCore.Dialog {
             id: buttonsRow
 
             Layout.fillWidth: true
-            PlasmaComponents.Button {
+            PlasmaComponents3.Button {
                 id: switchButton
                 enabled: root.currentPlugin !== alternativesHelper.currentPlugin
                 Layout.fillWidth: true
@@ -179,8 +180,7 @@ PlasmaCore.Dialog {
                     }
                 }
             }
-            PlasmaComponents.Button {
-                id: cancelButton
+            PlasmaComponents3.Button {
                 Layout.fillWidth: true
                 text: i18nd("plasma_shell_org.kde.plasma.desktop", "Cancel");
                 onClicked: {
