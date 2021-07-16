@@ -48,6 +48,19 @@ KCM.SimpleKCM {
                 }
             }
             Thumbnail {
+                imageSource: kcm.defaultMixedLookAndFeel.thumbnail
+                text: i18n("Feren OS")
+                checked: kcm.globalsSettings.lookAndFeelPackage === kcm.defaultMixedLookAndFeel.id
+                QQC2.ButtonGroup.group: themeGroup
+
+                onToggled: kcm.globalsSettings.lookAndFeelPackage = kcm.defaultMixedLookAndFeel.id
+
+                KCM.SettingStateBinding {
+                    configObject: kcm.globalsSettings
+                    settingName: "lookAndFeelPackage"
+                }
+            }
+            Thumbnail {
                 imageSource: kcm.defaultDarkLookAndFeel.thumbnail
                 text: i18n("Dark Theme")
                 checked: kcm.globalsSettings.lookAndFeelPackage === kcm.defaultDarkLookAndFeel.id
@@ -126,7 +139,7 @@ KCM.SimpleKCM {
             }
             QQC2.Button {
                 text: i18n("Show More Appearance Settings...")
-                icon.name: "preferences-desktop-theme-global"
+                icon.name: "preferences-desktop-color"
                 onClicked: kcm.openKCM("kcm_lookandfeel")
             }
         }
