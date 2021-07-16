@@ -15,7 +15,7 @@
       <label>Single click to open files</label>
       <default>true</default>
     </entry>
-    <entry name="lookAndFeelPackage" key="LookAndFeelPackage" type="String">
+    <entry name="globalThemePackage" key="GlobalThemePackage" type="String">
       <label>Global Look and Feel package</label>
       <default>org.feren.default</default>
     </entry>

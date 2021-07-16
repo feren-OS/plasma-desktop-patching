@@ -203,7 +203,7 @@ KCMLandingPage::KCMLandingPage(QObject *parent, const QVariantList &args)
     m_defaultDarkLookAndFeel->m_package.setPath(globalsSettings()->defaultDarkLookAndFeel());
     m_defaultMixedLookAndFeel->m_package.setPath(globalsSettings()->defaultMixedLookAndFeel());
 
-    connect(globalsSettings(), &LandingPageGlobalsSettings::lookAndFeelPackageChanged, this, [this]() {
+    connect(globalsSettings(), &LandingPageGlobalsSettings::globalThemePackageChanged, this, [this]() {
         m_lnfDirty = true;
     });
 
@@ -319,7 +319,7 @@ void KCMLandingPage::save()
 
     if (m_lnfDirty) {
         QProcess::startDetached(QStringLiteral("plasma-apply-lookandfeel"),
-                                QStringList({QStringLiteral("-a"), globalsSettings()->lookAndFeelPackage()}));
+                                QStringList({QStringLiteral("-a"), globalsSettings()->globalThemePackage()}));
     }
 }
 
