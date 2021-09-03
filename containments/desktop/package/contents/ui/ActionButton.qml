@@ -53,8 +53,6 @@ PlasmaComponents.ToolButton {
         text: button.qAction ? button.qAction.text : ""
         delay: 0
         visible: button.hovered && text.length > 0
-        x: button.width
-        y: button.height/2 - height/2
         PlasmaCore.ColorScope.colorGroup: PlasmaCore.Theme.NormalColorGroup
         PlasmaCore.ColorScope.inherit: false
     }
@@ -63,11 +61,9 @@ PlasmaComponents.ToolButton {
 
         PlasmaCore.SvgItem {
             id: icon
-            Layout.preferredWidth: PlasmaCore.Units.iconSizes.small
+            Layout.preferredWidth: PlasmaCore.Units.roundToIconSize(button.iconSize)
             Layout.preferredHeight: Layout.preferredWidth
             Layout.alignment: Qt.AlignHCenter
-            width: iconSize
-            height: iconSize
             svg: button.svg
         }
 

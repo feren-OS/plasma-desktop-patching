@@ -7,7 +7,7 @@
   <group name="General">
     <entry name="colorScheme" key="ColorScheme" type="String">
       <label>Color scheme name</label>
-      <default>Feren</default>
+      <default>BreezeLight</default>
     </entry>
   </group>
   <group name="KDE">
@@ -15,21 +15,17 @@
       <label>Single click to open files</label>
       <default>true</default>
     </entry>
-    <entry name="globalThemePackage" key="GlobalThemePackage" type="String">
+    <entry name="lookAndFeelPackage" key="LookAndFeelPackage" type="String">
       <label>Global Look and Feel package</label>
-      <default>org.feren.default</default>
+      <default>org.kde.breeze.desktop</default>
     </entry>
     <entry name="defaultLightLookAndFeel" key="DefaultLightLookAndFeel" type="String">
       <label>Global Look and Feel package, alternate</label>
-      <default>org.feren.light</default>
-    </entry>
-    <entry name="defaultMixedLookAndFeel" key="DefaultMixedLookAndFeel" type="String">
-      <label>Global Look and Feel package, alternate</label>
-      <default>org.feren.default</default>
+      <default>org.kde.breeze.desktop</default>
     </entry>
     <entry name="defaultDarkLookAndFeel" key="DefaultDarkLookAndFeel" type="String">
       <label>Global Look and Feel package, alternate</label>
-      <default>org.feren.dark</default>
+      <default>org.kde.breezedark.desktop</default>
     </entry>
     <entry name="animationDurationFactor" key="AnimationDurationFactor" type="Double">
       <label>Animation speed</label>

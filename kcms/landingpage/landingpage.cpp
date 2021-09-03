@@ -196,14 +196,12 @@ KCMLandingPage::KCMLandingPage(QObject *parent, const QVariantList &args)
     m_mostUsedModel->setResultModel(new ResultModel(AllResources | Agent(QStringLiteral("org.kde.systemsettings")) | HighScoredFirst | Limit(5), this));
 
     m_defaultLightLookAndFeel = new LookAndFeelGroup(this);
-    m_defaultMixedLookAndFeel = new LookAndFeelGroup(this);
     m_defaultDarkLookAndFeel = new LookAndFeelGroup(this);
 
     m_defaultLightLookAndFeel->m_package.setPath(globalsSettings()->defaultLightLookAndFeel());
     m_defaultDarkLookAndFeel->m_package.setPath(globalsSettings()->defaultDarkLookAndFeel());
-    m_defaultMixedLookAndFeel->m_package.setPath(globalsSettings()->defaultMixedLookAndFeel());
 
-    connect(globalsSettings(), &LandingPageGlobalsSettings::globalThemePackageChanged, this, [this]() {
+    connect(globalsSettings(), &LandingPageGlobalsSettings::lookAndFeelPackageChanged, this, [this]() {
         m_lnfDirty = true;
     });
 
@@ -319,7 +317,7 @@ void KCMLandingPage::save()
 
     if (m_lnfDirty) {
         QProcess::startDetached(QStringLiteral("plasma-apply-lookandfeel"),
-                                QStringList({QStringLiteral("-a"), globalsSettings()->globalThemePackage()}));
+                                QStringList({QStringLiteral("-a"), globalsSettings()->lookAndFeelPackage()}));
     }
 }
 
@@ -338,11 +336,6 @@ LookAndFeelGroup *KCMLandingPage::defaultLightLookAndFeel() const
 LookAndFeelGroup *KCMLandingPage::defaultDarkLookAndFeel() const
 {
     return m_defaultDarkLookAndFeel;
-}
-
-LookAndFeelGroup *KCMLandingPage::defaultMixedLookAndFeel() const
-{
-    return m_defaultMixedLookAndFeel;
 }
 
 void KCMLandingPage::openWallpaperDialog()

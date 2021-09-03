@@ -37,40 +37,27 @@ KCM.SimpleKCM {
             Thumbnail {
                 imageSource: kcm.defaultLightLookAndFeel.thumbnail
                 text: i18n("Light Theme")
-                checked: kcm.globalsSettings.globalThemePackage === kcm.defaultLightLookAndFeel.id
+                checked: kcm.globalsSettings.lookAndFeelPackage === kcm.defaultLightLookAndFeel.id
                 QQC2.ButtonGroup.group: themeGroup
 
-                onToggled: kcm.globalsSettings.globalThemePackage = kcm.defaultLightLookAndFeel.id
+                onToggled: kcm.globalsSettings.lookAndFeelPackage = kcm.defaultLightLookAndFeel.id
 
                 KCM.SettingStateBinding {
                     configObject: kcm.globalsSettings
-                    settingName: "globalThemePackage"
-                }
-            }
-            Thumbnail {
-                imageSource: kcm.defaultMixedLookAndFeel.thumbnail
-                text: i18n("Feren OS")
-                checked: kcm.globalsSettings.globalThemePackage === kcm.defaultMixedLookAndFeel.id
-                QQC2.ButtonGroup.group: themeGroup
-
-                onToggled: kcm.globalsSettings.globalThemePackage = kcm.defaultMixedLookAndFeel.id
-
-                KCM.SettingStateBinding {
-                    configObject: kcm.globalsSettings
-                    settingName: "globalThemePackage"
+                    settingName: "lookAndFeelPackage"
                 }
             }
             Thumbnail {
                 imageSource: kcm.defaultDarkLookAndFeel.thumbnail
                 text: i18n("Dark Theme")
-                checked: kcm.globalsSettings.globalThemePackage === kcm.defaultDarkLookAndFeel.id
+                checked: kcm.globalsSettings.lookAndFeelPackage === kcm.defaultDarkLookAndFeel.id
                 QQC2.ButtonGroup.group: themeGroup
 
-                onToggled: kcm.globalsSettings.globalThemePackage = kcm.defaultDarkLookAndFeel.id
+                onToggled: kcm.globalsSettings.lookAndFeelPackage = kcm.defaultDarkLookAndFeel.id
 
                 KCM.SettingStateBinding {
                     configObject: kcm.globalsSettings
-                    settingName: "globalThemePackage"
+                    settingName: "lookAndFeelPackage"
                 }
             }
         }
@@ -139,7 +126,7 @@ KCM.SimpleKCM {
             }
             QQC2.Button {
                 text: i18n("Show More Appearance Settings...")
-                icon.name: "preferences-desktop-color"
+                icon.name: "preferences-desktop-theme-global"
                 onClicked: kcm.openKCM("kcm_lookandfeel")
             }
         }

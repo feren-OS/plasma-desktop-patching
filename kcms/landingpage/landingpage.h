@@ -89,7 +89,6 @@ class KCMLandingPage : public KQuickAddons::ManagedConfigModule
     Q_PROPERTY(QJsonArray feedbackSources MEMBER m_feedbackSources NOTIFY feedbackSourcesChanged)
 #endif
     Q_PROPERTY(LookAndFeelGroup *defaultLightLookAndFeel READ defaultLightLookAndFeel CONSTANT)
-    Q_PROPERTY(LookAndFeelGroup *defaultMixedLookAndFeel READ defaultMixedLookAndFeel CONSTANT)
     Q_PROPERTY(LookAndFeelGroup *defaultDarkLookAndFeel READ defaultDarkLookAndFeel CONSTANT)
 
 public:
@@ -108,7 +107,6 @@ public:
 #endif
 
     LookAndFeelGroup *defaultLightLookAndFeel() const;
-    LookAndFeelGroup *defaultMixedLookAndFeel() const;
     LookAndFeelGroup *defaultDarkLookAndFeel() const;
 
     Q_INVOKABLE void openWallpaperDialog();
@@ -126,7 +124,6 @@ private:
     LandingPageData *m_data;
 
     LookAndFeelGroup *m_defaultLightLookAndFeel = nullptr;
-    LookAndFeelGroup *m_defaultMixedLookAndFeel = nullptr;
     LookAndFeelGroup *m_defaultDarkLookAndFeel = nullptr;
 
     MostUsedModel *m_mostUsedModel = nullptr;
